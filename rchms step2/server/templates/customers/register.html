@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% block title %}Register Customer{% endblock %}
+
+{% block content %}
+<div class="form-shell">
+    <div class="form-shell-icon"><i data-lucide="user-plus"></i></div>
+    <h1 class="page-title" style="font-size: 1.4rem;">Register New Customer</h1>
+    <p class="page-subtitle mb-4">A membership ID will be assigned automatically.</p>
+
+    <div class="card">
+        <div class="card-body p-4">
+            <form method="POST" action="{{ url_for('customers.register') }}">
+                <div class="mb-3">
+                    <label class="form-label">Full Name</label>
+                    <input type="text" class="form-control" name="full_name" required autofocus>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Phone Number</label>
+                    <input type="text" class="form-control" name="phone_number" placeholder="e.g. 0241234567" required>
+                </div>
+                <div class="d-flex gap-2 mt-4">
+                    <button type="submit" class="btn btn-brand">Register Customer</button>
+                    <a href="{{ url_for('customers.list_customers') }}" class="btn btn-outline-secondary">Cancel</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

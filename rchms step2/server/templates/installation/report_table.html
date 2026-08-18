@@ -1,0 +1,79 @@
+{% extends "base.html" %}
+{% block title %}{{ page_title }}{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <h1 class="page-title">{{ page_title }}</h1>
+        <p class="page-subtitle">{{ subtitle }}</p>
+    </div>
+    <div class="d-flex gap-2">
+        <a href="{{ pdf_url }}" class="btn btn-gold btn-sm"><i data-lucide="download"></i> Download PDF</a>
+        <a href="{{ url_for('installation.reports_home') }}" class="btn btn-outline-secondary btn-sm">Back to Reports</a>
+    </div>
+</div>
+
+{% if filter_type == "daily" %}
+<form method="GET" class="d-flex gap-2 align-items-end mb-3">
+    <div>
+        <label class="form-label mb-1">Date</label>
+        <input type="date" class="form-control form-control-sm" name="date" value="{{ selected_date }}">
+    </div>
+    <button type="submit" class="btn btn-sm btn-outline-primary">Go</button>
+</form>
+{% elif filter_type in ("monthly", "monthly_optional") %}
+<form method="GET" class="d-flex gap-2 align-items-end mb-3">
+    <div>
+        <label class="form-label mb-1">Month</label>
+        <select class="form-select form-select-sm" name="month">
+            {% for m in range(1, 13) %}
+            <option value="{{ m }}" {% if m == selected_month %}selected{% endif %}>{{ month_names[m] }}</option>
+            {% endfor %}
+        </select>
+    </div>
+    <div>
+        <label class="form-label mb-1">Year</label>
+        <input type="number" class="form-control form-control-sm" style="width: 100px;" name="year" value="{{ selected_year }}">
+    </div>
+    <button type="submit" class="btn btn-sm btn-outline-primary">Go</button>
+    {% if filter_type == "monthly_optional" %}
+    <a href="{{ url_for('installation.revenue_report') }}" class="btn btn-sm btn-outline-secondary">All Time</a>
+    {% endif %}
+</form>
+{% endif %}
+
+{% if summary %}
+<div class="card mb-3">
+    <div class="card-body py-3">
+        {% for line in summary %}
+        <div class="{{ 'text-muted small' if not loop.first else '' }}">{{ line }}</div>
+        {% endfor %}
+    </div>
+</div>
+{% endif %}
+
+<div class="card">
+    <div class="card-body p-0">
+        <table class="table table-hover mb-0">
+            <thead class="table-light">
+                <tr>
+                    {% for col in columns %}
+                    <th>{{ col }}</th>
+                    {% endfor %}
+                </tr>
+            </thead>
+            <tbody>
+                {% for row in rows %}
+                <tr>
+                    {% for cell in row %}
+                    <td>{{ cell }}</td>
+                    {% endfor %}
+                </tr>
+                {% else %}
+                <tr><td colspan="{{ columns|length }}" class="text-center text-muted py-4">No records found.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

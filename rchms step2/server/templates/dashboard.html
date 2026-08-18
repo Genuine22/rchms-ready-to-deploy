@@ -1,0 +1,126 @@
+{% extends "base.html" %}
+{% block title %}Dashboard{% endblock %}
+
+{% block content %}
+<div class="dashboard-hero">
+    <div class="dashboard-hero-overlay"></div>
+    <div class="dashboard-hero-content">
+        <h1 class="dashboard-hero-title">Welcome back, {{ user.full_name.split(' ')[0] }} 👋</h1>
+        <p class="dashboard-hero-sub">Here's what's happening at the hub right now.</p>
+    </div>
+</div>
+
+<div class="row mb-4 g-3">
+    <div class="col-md-3">
+        <a href="{{ url_for('payments.list_payments') }}" class="stat-card">
+            <div class="stat-label">Today's Revenue</div>
+            <div class="stat-value" style="color: var(--emerald);">GHS <span id="stat-revenue">{{ "%.2f"|format(stats.total_revenue_today) }}</span></div>
+        </a>
+    </div>
+    <div class="col-md-3">
+        <a href="{{ url_for('customers.list_customers', registered='today') }}" class="stat-card">
+            <div class="stat-label">New Customers Today</div>
+            <div class="stat-value"><span id="stat-new-customers">{{ stats.new_customers_today }}</span></div>
+        </a>
+    </div>
+    <div class="col-md-3">
+        <a href="{{ url_for('sessions.today_sessions') }}" class="stat-card">
+            <div class="stat-label">Sessions Today</div>
+            <div class="stat-value"><span id="stat-sessions-today">{{ stats.sessions_today }}</span></div>
+            <div class="text-muted mt-1" style="font-size: 0.78rem;">
+                <i data-lucide="globe" style="width:16px;height:16px;"></i> <span id="stat-internet-active">{{ stats.internet_sessions_active }}</span> active &middot;
+                <i data-lucide="gamepad-2" style="width:16px;height:16px;"></i> <span id="stat-gaming-active">{{ stats.gaming_sessions_active }}</span> active
+            </div>
+        </a>
+    </div>
+    <div class="col-md-3">
+        <a href="{{ url_for('print_jobs.list_print_jobs', today='1') }}" class="stat-card">
+            <div class="stat-label">Business Centre Today</div>
+            <div class="stat-value"><span id="stat-printing-jobs">{{ stats.printing_jobs_today }}</span></div>
+            <div class="text-muted mt-1" style="font-size: 0.78rem;"><span id="stat-printing-pages">{{ stats.printing_pages_today }}</span> units logged</div>
+        </a>
+    </div>
+</div>
+
+<h6 class="section-label">Hub Signal</h6>
+<div class="row mb-4 g-3">
+    <div class="col-md-3">
+        <a href="{{ url_for('computers.list_computers', status='available') }}" class="stat-card text-center">
+            <div class="signal-node {% if stats.computers_available > 0 %}is-live{% endif %}" id="node-available" style="--node-color: var(--color-success);"></div>
+            <div class="stat-value" style="color: var(--color-success);"><span id="stat-available">{{ stats.computers_available }}</span></div>
+            <div class="stat-label mb-0">Available</div>
+        </a>
+    </div>
+    <div class="col-md-3">
+        <a href="{{ url_for('computers.list_computers', status='in_use') }}" class="stat-card text-center">
+            <div class="signal-node {% if stats.computers_in_use > 0 %}is-urgent{% endif %}" id="node-in-use" style="--node-color: var(--color-danger);"></div>
+            <div class="stat-value" style="color: var(--color-danger);"><span id="stat-in-use">{{ stats.computers_in_use }}</span></div>
+            <div class="stat-label mb-0">In Use</div>
+        </a>
+    </div>
+    <div class="col-md-3">
+        <a href="{{ url_for('computers.list_computers', status='reserved') }}" class="stat-card text-center">
+            <div class="signal-node" style="--node-color: var(--color-warning);"></div>
+            <div class="stat-value" style="color: var(--color-warning);"><span id="stat-reserved">{{ stats.computers_reserved }}</span></div>
+            <div class="stat-label mb-0">Reserved</div>
+        </a>
+    </div>
+    <div class="col-md-3">
+        <a href="{{ url_for('computers.list_computers', status='offline') }}" class="stat-card text-center">
+            <div class="signal-node" style="--node-color: var(--color-ink-muted);"></div>
+            <div class="stat-value" style="color: var(--color-ink-muted);"><span id="stat-offline">{{ stats.computers_offline }}</span></div>
+            <div class="stat-label mb-0">Offline</div>
+        </a>
+    </div>
+</div>
+
+<h6 class="section-label">Quick Actions</h6>
+<div class="d-flex gap-2 flex-wrap">
+    <a href="{{ url_for('sessions.start_session') }}" class="btn btn-brand"><i data-lucide="play"></i> Start Session</a>
+    <a href="{{ url_for('customers.register') }}" class="btn btn-brand"><i data-lucide="user-plus"></i> Register Customer</a>
+    <a href="{{ url_for('print_jobs.home') }}" class="btn btn-brand"><i data-lucide="printer"></i> Business Centre</a>
+    <a href="{{ url_for('payments.record_payment') }}" class="btn btn-brand"><i data-lucide="banknote"></i> Record Payment</a>
+    <a href="{{ url_for('sessions.gaming_dashboard') }}" class="btn btn-brand"><i data-lucide="gamepad-2"></i> Gaming Area</a>
+</div>
+
+<script>
+// Silent background refresh - no page reload, no visible flash.
+// Every 30 seconds, fetch fresh numbers and update just the text in
+// place. If the fetch fails (e.g. brief network hiccup), it simply
+// tries again next cycle rather than disrupting the page.
+const STATS_URL = "{{ url_for('dashboard.stats_json') }}";
+
+function setText(id, value) {
+    const el = document.getElementById(id);
+    if (el) el.textContent = value;
+}
+
+function refreshDashboardStats() {
+    fetch(STATS_URL)
+        .then(response => response.json())
+        .then(stats => {
+            setText('stat-revenue', stats.total_revenue_today.toFixed(2));
+            setText('stat-new-customers', stats.new_customers_today);
+            setText('stat-sessions-today', stats.sessions_today);
+            setText('stat-internet-active', stats.internet_sessions_active);
+            setText('stat-gaming-active', stats.gaming_sessions_active);
+            setText('stat-printing-jobs', stats.printing_jobs_today);
+            setText('stat-printing-pages', stats.printing_pages_today);
+            setText('stat-available', stats.computers_available);
+            setText('stat-in-use', stats.computers_in_use);
+            setText('stat-reserved', stats.computers_reserved);
+            setText('stat-offline', stats.computers_offline);
+
+            // Keep the pulsing signal-node animations in sync with
+            // whether there's anything to show as "live" right now.
+            const availNode = document.getElementById('node-available');
+            if (availNode) availNode.classList.toggle('is-live', stats.computers_available > 0);
+            const inUseNode = document.getElementById('node-in-use');
+            if (inUseNode) inUseNode.classList.toggle('is-urgent', stats.computers_in_use > 0);
+        })
+        .catch(() => { /* silently retry next cycle */ });
+}
+
+setInterval(refreshDashboardStats, 30000);
+</script>
+{% endblock %}

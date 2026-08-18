@@ -1,0 +1,121 @@
+{% extends "base.html" %}
+{% block title %}{{ item.item_name }}{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <h1 class="page-title" style="font-size: 1.4rem;">{{ item.item_name }}</h1>
+        <p class="page-subtitle mb-0">{{ item.category.name }}{% if item.brand %} · {{ item.brand }}{% endif %}{% if item.model %} {{ item.model }}{% endif %}</p>
+    </div>
+    <div class="d-flex gap-2">
+        <a href="{{ url_for('inventory.edit_item', item_id=item.item_id) }}" class="btn btn-outline-secondary btn-sm"><i data-lucide="pencil"></i> Edit</a>
+        <a href="{{ url_for('inventory.list_items') }}" class="btn btn-outline-secondary btn-sm">Back to Items</a>
+    </div>
+</div>
+
+{% if item.is_out_of_stock() %}
+<div class="alert alert-danger mb-3">⚠ This item is out of stock.</div>
+{% elif item.is_low_stock() %}
+<div class="alert alert-warning mb-3">⚠ Only {{ item.quantity_in_stock|round(2) }} {{ item.unit }} remaining — below the minimum level of {{ item.minimum_stock_level|round(2) }}.</div>
+{% endif %}
+
+<div class="row g-3 mb-3">
+    <div class="col-md-3 col-sm-6">
+        <div class="stat-card">
+            <div class="stat-label">In Stock</div>
+            <div class="stat-value">{{ item.quantity_in_stock|round(2) }} {{ item.unit }}</div>
+        </div>
+    </div>
+    <div class="col-md-3 col-sm-6">
+        <div class="stat-card">
+            <div class="stat-label">Available</div>
+            <div class="stat-value" style="color: var(--emerald);">{{ item.available_quantity()|round(2) }} {{ item.unit }}</div>
+        </div>
+    </div>
+    <div class="col-md-3 col-sm-6">
+        <div class="stat-card">
+            <div class="stat-label">Reserved</div>
+            <div class="stat-value">{{ item.reserved_quantity()|round(2) }} {{ item.unit }}</div>
+        </div>
+    </div>
+    <div class="col-md-3 col-sm-6">
+        <div class="stat-card">
+            <div class="stat-label">Status</div>
+            <div class="stat-value" style="font-size:1.1rem;">{{ item.status|title }}</div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-3">
+    <div class="col-lg-5">
+        <div class="card mb-3">
+            <div class="card-body">
+                <h6 class="mb-3">Item Details</h6>
+                <dl class="row mb-0">
+                    <dt class="col-sm-5">Serial Number</dt><dd class="col-sm-7">{{ item.serial_number or '-' }}</dd>
+                    <dt class="col-sm-5">Asset Tag</dt><dd class="col-sm-7">{{ item.asset_tag or '-' }}</dd>
+                    <dt class="col-sm-5">Minimum Stock</dt><dd class="col-sm-7">{{ item.minimum_stock_level|round(2) }} {{ item.unit }}</dd>
+                    <dt class="col-sm-5">Unit Cost</dt><dd class="col-sm-7">{{ '%.2f'|format(item.unit_cost) if item.unit_cost is not none else '-' }}</dd>
+                    <dt class="col-sm-5">Supplier</dt><dd class="col-sm-7">{{ item.supplier or '-' }}</dd>
+                    <dt class="col-sm-5">Purchase Date</dt><dd class="col-sm-7">{{ item.purchase_date.strftime('%d %b %Y') if item.purchase_date else '-' }}</dd>
+                    <dt class="col-sm-5">Warranty Expiry</dt><dd class="col-sm-7">{{ item.warranty_expiry.strftime('%d %b %Y') if item.warranty_expiry else '-' }}</dd>
+                    <dt class="col-sm-5">Warehouse Location</dt><dd class="col-sm-7">{{ item.warehouse_location or '-' }}</dd>
+                    <dt class="col-sm-5">Notes</dt><dd class="col-sm-7">{{ item.notes or '-' }}</dd>
+                </dl>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-body">
+                <h6 class="mb-3">Stock Action</h6>
+                <form method="POST" action="{{ url_for('inventory.item_transaction', item_id=item.item_id) }}">
+                    <div class="mb-2">
+                        <select class="form-select form-select-sm" name="transaction_type" required>
+                            <option value="stock_in">Stock In (received from supplier)</option>
+                            <option value="damaged">Mark Damaged</option>
+                            <option value="lost">Mark Lost</option>
+                            <option value="returned">Returned to Warehouse</option>
+                            <option value="adjustment">Manual Adjustment (set new total)</option>
+                        </select>
+                    </div>
+                    <div class="mb-2">
+                        <input type="number" step="0.01" min="0" class="form-control form-control-sm" name="quantity" placeholder="Quantity" required>
+                    </div>
+                    <div class="mb-2">
+                        <input type="text" class="form-control form-control-sm" name="notes" placeholder="Note (required for adjustments)">
+                    </div>
+                    <button type="submit" class="btn btn-sm btn-gold w-100">Apply</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-7">
+        <div class="card">
+            <div class="card-body p-0">
+                <h6 class="p-3 pb-0 mb-0">Movement History</h6>
+                <table class="table table-hover mb-0">
+                    <thead class="table-light">
+                        <tr><th>Date</th><th>Type</th><th>Quantity</th><th>Job/Ticket</th><th>By</th></tr>
+                    </thead>
+                    <tbody>
+                        {% for t in transactions %}
+                        <tr>
+                            <td class="text-muted">{{ t.created_at.strftime('%d %b %Y %H:%M') }}</td>
+                            <td><span class="badge" style="background: var(--gold-glow); color: var(--gold-bright);">{{ t.transaction_type.replace('_',' ')|title }}</span></td>
+                            <td>{{ t.quantity|round(2) }} {{ item.unit }}</td>
+                            <td class="text-muted">
+                                {% if t.installation_id %}Job #{{ t.installation_id }}{% elif t.ticket_id %}Ticket #{{ t.ticket_id }}{% else %}-{% endif %}
+                            </td>
+                            <td class="text-muted">{{ t.performer.full_name if t.performer else '-' }}</td>
+                        </tr>
+                        {% else %}
+                        <tr><td colspan="5" class="text-center text-muted py-4">No stock movements recorded yet.</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

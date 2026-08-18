@@ -1,0 +1,345 @@
+{% extends "base.html" %}
+{% block title %}Gaming{% endblock %}
+
+{% block content %}
+<div class="section-hero">
+    <img class="section-hero-img" src="https://images.unsplash.com/photo-1542751371-adc38448a05e?w=1400&q=85" alt="">
+    <div class="section-hero-overlay"></div>
+    <div class="section-hero-content">
+        <div>
+            <h1>🎮 Gaming Area</h1>
+            <p>Live sessions, packages and computer status.</p>
+        </div>
+    </div>
+</div>
+
+<h6 class="section-label">Gaming Computers</h6>
+<div class="row g-3 mb-4">
+    {% for computer in computers %}
+    <div class="col-sm-6 col-md-4 col-lg-3">
+        <div class="node-card state-{{ computer.status }}">
+            <div class="node-card-top">
+                {% if computer.status == 'available' %}
+                    <span class="node-card-status-pill live"><span class="dot"></span>Available</span>
+                {% elif computer.status == 'in_use' %}
+                    <span class="node-card-status-pill live"><span class="dot" style="background:var(--danger);box-shadow:0 0 0 0 rgba(239,68,68,0.5);animation:pulse-red 1.8s ease-out infinite;"></span>In Use</span>
+                {% else %}
+                    <span class="node-card-status-pill"><span class="dot"></span>{{ computer.status|title }}</span>
+                {% endif %}
+            </div>
+
+            <!-- Gaming PC photo panel — CSS background avoids hotlink blocks -->
+            <div class="node-card-photo photo-gaming state-{{ computer.status }}">
+                <svg class="pipe-svg" viewBox="0 0 120 70" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                    <polyline class="pipe-line-1" points="0,35 20,35 20,15 50,15 50,35 80,35 80,55 110,55 120,55" fill="none" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                    <polyline class="pipe-line-2" points="0,20 15,20 15,50 45,50 45,20 75,20 75,48 120,48" fill="none" stroke-width="0.9" stroke-linecap="round" stroke-linejoin="round" opacity="0.45"/>
+                    {% if computer.status in ('available', 'in_use') %}
+                    <circle class="pipe-dot {% if computer.status == 'in_use' %}pipe-dot-urgent{% endif %}" r="2.8" cx="0" cy="35"/>
+                    <circle class="pipe-dot-trail {% if computer.status == 'in_use' %}pipe-dot-urgent{% endif %}" r="1.6" cx="0" cy="35"/>
+                    {% endif %}
+                </svg>
+                <div class="pipe-status-badge">
+                    {% if computer.status == 'available' %}<span class="pipe-badge-dot green"></span> Online
+                    {% elif computer.status == 'in_use' %}<span class="pipe-badge-dot red"></span> In Use
+                    {% else %}<span class="pipe-badge-dot grey"></span> Offline{% endif %}
+                </div>
+            </div>
+
+            <div class="node-card-body">
+                <h5>{{ computer.name }}</h5>
+                <p class="node-card-meta">Gaming &middot; {{ computer.ip_address or 'no IP set' }}</p>
+            </div>
+
+            <div class="node-card-actions">
+                {% if computer.status == 'available' %}
+                    <a href="{{ url_for('sessions.start_session', computer_id=computer.computer_id) }}" class="btn btn-brand btn-sm">Start Session</a>
+                {% elif computer.status == 'in_use' %}
+                    <a href="{{ url_for('sessions.list_sessions', category='gaming') }}" class="btn btn-outline-secondary btn-sm">View Session</a>
+                {% else %}
+                    <span class="btn btn-outline-secondary btn-sm disabled" style="opacity:0.5;">Unavailable</span>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    {% else %}
+    <p class="text-muted">No gaming computers set up yet. Add one from the Computers page and set its type to "Gaming".</p>
+    {% endfor %}
+</div>
+
+<!-- Available Packages Section -->
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h6 class="section-label mb-0">Available Packages</h6>
+    <button class="btn btn-sm btn-gold" data-bs-toggle="modal" data-bs-target="#addPackageModal">+ Add Package</button>
+</div>
+
+<div class="row g-3 mb-4">
+    {% for service in services %}
+    <div class="col-md-3 col-sm-6">
+        <div class="card h-100" style="border-top: 4px solid {{ 'var(--color-gold)' if service.is_active else 'var(--color-border)' }};">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-start mb-2">
+                    <h5 class="mb-0">{{ service.service_name }}</h5>
+                    {% if service.is_active %}
+                        <span class="badge" style="background: color-mix(in srgb, var(--color-success) 14%, var(--color-surface)); color: var(--color-success);">Active</span>
+                    {% else %}
+                        <span class="badge" style="background: color-mix(in srgb, var(--color-ink-muted) 12%, var(--color-surface)); color: var(--color-ink-muted);">Inactive</span>
+                    {% endif %}
+                </div>
+                <div class="d-flex align-items-baseline gap-1 mb-3">
+                    <span class="display-font" style="font-size: 1.5rem; font-weight: 700; color: var(--color-forest);">GHS {{ "%.2f"|format(service.price) }}</span>
+                </div>
+                <p class="text-muted mb-3" style="font-size: 0.9rem;">
+                    {% if service.duration_minutes %}
+                        {{ service.duration_minutes }} minute{% if service.duration_minutes != 1 %}s{% endif %}
+                    {% else %}
+                        Custom duration
+                    {% endif %}
+                </p>
+
+                <form method="POST" action="{{ url_for('sessions.toggle_gaming_package_active', service_id=service.service_id) }}"
+                      class="d-flex justify-content-between align-items-center mb-3">
+                    <label class="text-muted" style="font-size: 0.85rem;">{{ 'Active' if service.is_active else 'Inactive' }}</label>
+                    <label class="ios-switch">
+                        <input type="checkbox" {% if service.is_active %}checked{% endif %}
+                               onchange="this.form.submit()">
+                        <span class="track"></span>
+                    </label>
+                </form>
+
+                <div class="d-flex gap-2">
+                    <button class="btn btn-sm btn-outline-primary flex-grow-1" data-bs-toggle="modal" data-bs-target="#editPackageModal" 
+                            onclick="loadEditPackage({{ service.service_id }}, '{{ service.service_name }}', {{ service.price }}, {{ service.duration_minutes or 'null' }})">
+                        Edit
+                    </button>
+                    {% set uses = usage_counts.get(service.service_id, 0) %}
+                    {% set active_uses = active_usage_counts.get(service.service_id, 0) %}
+                    {% if active_uses %}
+                    <button type="button" class="btn btn-sm btn-outline-secondary" disabled
+                            title="{{ active_uses }} active session right now - deactivate instead, or wait for it to finish.">
+                        Delete
+                    </button>
+                    {% else %}
+                    <form method="POST" action="{{ url_for('sessions.delete_gaming_package', service_id=service.service_id) }}" style="display: inline;" 
+                          onsubmit="return confirm('Delete this package? This cannot be undone.{% if uses %} {{ uses }} past session(s) will keep their record but no longer show this package name.{% endif %}');">
+                        <button type="submit" class="btn btn-sm btn-outline-danger">Delete</button>
+                    </form>
+                    {% endif %}
+                </div>
+                {% if active_uses %}
+                <p class="text-muted mt-2 mb-0" style="font-size: 0.75rem;">
+                    <i data-lucide="info" style="width:12px;height:12px;vertical-align:-1px;"></i>
+                    Currently in use by {{ active_uses }} active session{{ 's' if active_uses != 1 else '' }} - can't be deleted yet.
+                </p>
+                {% elif uses %}
+                <p class="text-muted mt-2 mb-0" style="font-size: 0.75rem;">
+                    <i data-lucide="info" style="width:12px;height:12px;vertical-align:-1px;"></i>
+                    {{ uses }} past session{{ 's' if uses != 1 else '' }} on record - deletable; those sessions will just show "Deleted package".
+                </p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    {% else %}
+    <p class="text-muted">No gaming packages configured.</p>
+    {% endfor %}
+</div>
+
+<h6 class="section-label">Active Gaming Sessions</h6>
+<div class="card">
+    <div class="card-body p-0">
+        <table class="table table-hover mb-0">
+            <thead class="table-light">
+                <tr>
+                    <th>Computer</th>
+                    <th>Customer</th>
+                    <th>Package</th>
+                    <th>Ends</th>
+                    <th>Time Left</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody id="gaming-tbody">
+                {% for session in sessions %}
+                <tr data-session-id="{{ session.session_id }}">
+                    <td><strong>{{ session.computer.name }}</strong></td>
+                    <td>{{ session.customer.full_name }}</td>
+                    <td>{{ session.service.service_name if session.service else "Deleted package" }}</td>
+                    <td>{{ session.ends_at.strftime('%I:%M %p') }}</td>
+                    <td>
+                        <span class="signal-bars-slot"></span>
+                        <span class="time-left-text" data-remaining="{{ session.seconds_remaining() }}"></span>
+                    </td>
+                    <td class="text-end">
+                        <a href="{{ url_for('sessions.view_session', session_id=session.session_id) }}"
+                           class="btn btn-sm btn-outline-primary">View</a>
+                        <form method="POST" action="{{ url_for('sessions.end_session', session_id=session.session_id) }}"
+                              class="d-inline" onsubmit="return confirm('End this session now?');">
+                            <button type="submit" class="btn btn-sm btn-outline-danger">End</button>
+                        </form>
+                    </td>
+                </tr>
+                {% else %}
+                <tr id="no-gaming-row">
+                    <td colspan="6" class="text-center text-muted py-4">No active gaming sessions right now.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Add Package Modal -->
+<div class="modal fade" id="addPackageModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Add Gaming Package</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="POST" action="{{ url_for('sessions.add_gaming_package') }}">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="packageName" class="form-label">Package Name</label>
+                        <input type="text" class="form-control" id="packageName" name="service_name" placeholder="e.g., Gold 30-Min" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="duration" class="form-label">Duration (Minutes)</label>
+                        <input type="number" class="form-control" id="duration" name="duration_minutes" placeholder="30" required min="1">
+                    </div>
+                    <div class="mb-3">
+                        <label for="price" class="form-label">Price (GHS)</label>
+                        <input type="number" class="form-control" id="price" name="price" placeholder="5.00" required min="0" step="0.01">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-gold">Add Package</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Edit Package Modal -->
+<div class="modal fade" id="editPackageModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Edit Gaming Package</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="POST" action="{{ url_for('sessions.edit_gaming_package', service_id=0) }}" id="editPackageForm">
+                <div class="modal-body">
+                    <input type="hidden" id="editServiceId" name="service_id">
+                    <div class="mb-3">
+                        <label for="editPackageName" class="form-label">Package Name</label>
+                        <input type="text" class="form-control" id="editPackageName" name="service_name" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="editDuration" class="form-label">Duration (Minutes)</label>
+                        <input type="number" class="form-control" id="editDuration" name="duration_minutes" required min="1">
+                    </div>
+                    <div class="mb-3">
+                        <label for="editPrice" class="form-label">Price (GHS)</label>
+                        <input type="number" class="form-control" id="editPrice" name="price" required min="0" step="0.01">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-gold">Update Package</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+const ACTIVE_SESSIONS_URL = "{{ url_for('sessions.active_sessions_json', category='gaming') }}";
+let countdowns = {};
+
+function signalBarsHtml(secs) {
+    let level = secs > 600 ? 4 : (secs > 300 ? 2 : 1);
+    return `<span class="signal-bars level-${level} me-2"><span></span><span></span><span></span><span></span></span>`;
+}
+function formatTime(totalSeconds) {
+    const s = Math.max(0, totalSeconds);
+    const m = Math.floor(s / 60);
+    const sec = s % 60;
+    return String(m).padStart(2, '0') + ':' + String(sec).padStart(2, '0');
+}
+function renderRowTime(sessionId) {
+    const row = document.querySelector(`tr[data-session-id="${sessionId}"]`);
+    if (!row) return;
+    const entry = countdowns[sessionId];
+    if (!entry) return;
+    const elapsedSeconds = (Date.now() - entry.syncedAtMs) / 1000;
+    const secs = Math.max(0, Math.round(entry.remaining - elapsedSeconds));
+    const barsSlot = row.querySelector('.signal-bars-slot');
+    const textSlot = row.querySelector('.time-left-text');
+    if (barsSlot) barsSlot.innerHTML = signalBarsHtml(secs);
+    if (textSlot) textSlot.textContent = formatTime(secs);
+}
+setInterval(function() {
+    for (const id in countdowns) { renderRowTime(id); }
+}, 250);
+
+function syncGamingSessions() {
+    fetch(ACTIVE_SESSIONS_URL)
+        .then(r => r.json())
+        .then(sessions => {
+            const tbody = document.getElementById('gaming-tbody');
+            const seenIds = new Set();
+            const now = Date.now();
+            sessions.forEach(function(s) {
+                seenIds.add(String(s.session_id));
+                countdowns[s.session_id] = { remaining: s.seconds_remaining, syncedAtMs: now };
+                let row = document.querySelector(`tr[data-session-id="${s.session_id}"]`);
+                if (!row) {
+                    row = document.createElement('tr');
+                    row.setAttribute('data-session-id', s.session_id);
+                    row.innerHTML = `
+                        <td><strong>${s.computer_name}</strong></td>
+                        <td>${s.customer_name}</td>
+                        <td>${s.service_name}</td>
+                        <td>${s.ends_at}</td>
+                        <td><span class="signal-bars-slot"></span> <span class="time-left-text"></span></td>
+                        <td class="text-end"><a href="/sessions/${s.session_id}" class="btn btn-sm btn-outline-primary">View</a></td>`;
+                    tbody.appendChild(row);
+                    const noRow = document.getElementById('no-gaming-row');
+                    if (noRow) noRow.remove();
+                }
+                renderRowTime(s.session_id);
+            });
+            document.querySelectorAll('#gaming-tbody tr[data-session-id]').forEach(function(row) {
+                const id = row.getAttribute('data-session-id');
+                if (!seenIds.has(id)) { delete countdowns[id]; row.remove(); }
+            });
+            if (sessions.length === 0 && !document.getElementById('no-gaming-row')) {
+                const tr = document.createElement('tr');
+                tr.id = 'no-gaming-row';
+                tr.innerHTML = '<td colspan="6" class="text-center text-muted py-4">No active gaming sessions right now.</td>';
+                tbody.appendChild(tr);
+            }
+        })
+        .catch(() => {});
+}
+document.querySelectorAll('.time-left-text[data-remaining]').forEach(function(el) {
+    const row = el.closest('tr[data-session-id]');
+    if (row) {
+        const id = row.getAttribute('data-session-id');
+        countdowns[id] = { remaining: parseInt(el.getAttribute('data-remaining'), 10), syncedAtMs: Date.now() };
+        renderRowTime(id);
+    }
+});
+setInterval(syncGamingSessions, 10000);
+
+function loadEditPackage(serviceId, serviceName, price, durationMinutes) {
+    document.getElementById('editServiceId').value = serviceId;
+    document.getElementById('editPackageName').value = serviceName;
+    document.getElementById('editPrice').value = price;
+    document.getElementById('editDuration').value = durationMinutes || '';
+    const form = document.getElementById('editPackageForm');
+    form.action = form.action.replace(/\/\d+\/edit$/, '/' + serviceId + '/edit');
+}
+</script>
+{% endblock %}

@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+{% block title %}Check Subscription Status{% endblock %}
+
+{% block content %}
+<div class="auth-shell">
+    <div class="signal-rings" aria-hidden="true" style="position:fixed;"><span></span><span></span><span></span></div>
+    <div class="auth-card" style="max-width: 440px;">
+        <div class="text-center mb-3">
+            <div class="form-shell-icon gold mx-auto"><i data-lucide="satellite-dish"></i></div>
+            <h4 style="color: var(--color-forest); margin-bottom: 2px;">RuralConnect Starlink</h4>
+            <p class="text-muted mb-0" style="font-size: 0.88rem;">Check your subscription status</p>
+        </div>
+
+        <form method="POST" action="{{ url_for('starlink.voucher_lookup') }}">
+            <div class="mb-3">
+                <label class="form-label">Username, Password, or Phone Number</label>
+                <input type="text" class="form-control" name="query" placeholder="e.g. SL0042, X7K2P9, or 0241234567" required autofocus>
+            </div>
+            <button type="submit" class="btn btn-gold w-100">Check Status</button>
+        </form>
+
+        {% if searched %}
+            <hr class="my-4">
+            {% if result %}
+                <div class="text-center">
+                    {% if result.status == 'active' %}
+                        <div class="signal-node is-live mb-2" style="--node-color: var(--color-success);"></div>
+                    {% elif result.status == 'pending_payment' %}
+                        <div class="signal-node mb-2" style="--node-color: var(--color-warning);"></div>
+                    {% else %}
+                        <div class="signal-node mb-2" style="--node-color: var(--color-ink-muted);"></div>
+                    {% endif %}
+
+                    <p class="text-muted mb-1" style="font-size: 0.85rem;">{{ result.subscriber.full_name }}</p>
+                    <h5 class="mb-2">{{ result.plan.plan_name if result.plan else "Deleted plan" }}</h5>
+
+                    {% if result.status == 'active' %}
+                        <span class="badge mb-2" style="background: color-mix(in srgb, var(--color-success) 14%, var(--color-surface)); color: var(--color-success);">Active</span>
+                        <p class="mb-1"><strong>{{ result.days_remaining() }}</strong> day(s) remaining</p>
+                        <p class="text-muted mb-1" style="font-size: 0.85rem;">{{ result.data_allocation_gb }} GB allocation</p>
+                        <p class="text-muted" style="font-size: 0.85rem;">Expires {{ result.ends_at.strftime('%d %b %Y') }}</p>
+                    {% elif result.status == 'pending_payment' %}
+                        <span class="badge mb-2" style="background: color-mix(in srgb, var(--color-gold) 18%, var(--color-surface)); color: var(--color-gold-dark);">Awaiting Payment</span>
+                        <p class="text-muted" style="font-size: 0.85rem;">Please complete payment to activate this subscription.</p>
+                    {% elif result.status == 'expired' %}
+                        <span class="badge mb-2" style="background: color-mix(in srgb, var(--color-ink-muted) 12%, var(--color-surface)); color: var(--color-ink-muted);">Expired</span>
+                        <p class="text-muted" style="font-size: 0.85rem;">Ended {{ result.ends_at.strftime('%d %b %Y') }}. Please renew at the hub.</p>
+                    {% else %}
+                        <span class="badge mb-2" style="background: rgba(26,26,26,0.08); color: var(--color-ink);">Cancelled</span>
+                    {% endif %}
+                </div>
+            {% else %}
+                <div class="alert alert-warning text-center mb-0">
+                    No subscription found for that voucher code or phone number.
+                </div>
+            {% endif %}
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

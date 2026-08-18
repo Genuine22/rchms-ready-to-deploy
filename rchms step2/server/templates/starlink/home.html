@@ -1,0 +1,88 @@
+{% extends "base.html" %}
+{% block title %}Starlink Membership{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <h1 class="page-title"><i data-lucide="satellite-dish" style="width:22px;height:22px;vertical-align:-3px;"></i> Starlink Membership</h1>
+        <p class="page-subtitle">Community internet subscriptions, separate from the cafe.</p>
+    </div>
+</div>
+
+<div class="row mb-4 g-3">
+    <div class="col-md-3">
+        <div class="stat-card">
+            <div class="stat-label">Total Subscribers</div>
+            <div class="stat-value">{{ total_subscribers }}</div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="stat-card">
+            <div class="stat-label">Active Subscriptions</div>
+            <div class="stat-value" style="color: var(--color-success);">{{ active_subscriptions }}</div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="stat-card">
+            <div class="stat-label">Awaiting Payment</div>
+            <div class="stat-value" style="color: var(--color-warning);">{{ pending_payment }}</div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="stat-card">
+            <div class="stat-label">Revenue Today</div>
+            <div class="stat-value" style="color: var(--color-forest);">GHS {{ "%.2f"|format(revenue_today) }}</div>
+        </div>
+    </div>
+</div>
+
+<div class="d-flex gap-2 flex-wrap mb-4">
+    <a href="{{ url_for('starlink.register_subscriber') }}" class="btn btn-brand"><i data-lucide="user-plus"></i> Register Subscriber</a>
+    <a href="{{ url_for('starlink.new_subscription') }}" class="btn btn-brand"><i data-lucide="file-plus"></i> New Subscription</a>
+    <a href="{{ url_for('starlink.list_subscribers') }}" class="btn btn-brand"><i data-lucide="users"></i> Subscribers</a>
+    <a href="{{ url_for('starlink.list_plans') }}" class="btn btn-brand"><i data-lucide="package"></i> Plans</a>
+    <a href="{{ url_for('starlink.list_subscriptions') }}" class="btn btn-brand"><i data-lucide="clipboard-list"></i> All Subscriptions</a>
+    <a href="{{ url_for('starlink.renewals_dashboard') }}" class="btn btn-brand"><i data-lucide="bell-ring"></i> Renewals</a>
+</div>
+
+<h6 class="section-label">⏰ Expiring Soon (next 3 days)</h6>
+<div class="card mb-4">
+    <div class="card-body p-0">
+        <table class="table table-hover mb-0">
+            <thead class="table-light">
+                <tr>
+                    <th>Subscriber</th>
+                    <th>Phone</th>
+                    <th>Plan</th>
+                    <th>Ends</th>
+                    <th>Days Left</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for sub in expiring_soon %}
+                <tr>
+                    <td>{{ sub.subscriber.full_name }}</td>
+                    <td>{{ sub.subscriber.phone_number }}</td>
+                    <td>{{ sub.plan.plan_name if sub.plan else "Deleted plan" }}</td>
+                    <td>{{ sub.ends_at.strftime('%d %b %Y') }}</td>
+                    <td>
+                        <span class="badge {% if sub.days_remaining() == 0 %}badge-danger{% else %}badge-warning{% endif %}">
+                            {{ sub.days_remaining() }} day{{ 's' if sub.days_remaining() != 1 else '' }}
+                        </span>
+                    </td>
+                    <td class="text-end">
+                        <a href="{{ url_for('starlink.renew_subscription', subscription_id=sub.subscription_id) }}"
+                           class="btn btn-sm btn-outline-primary">Renew</a>
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="6" class="text-center text-muted py-3">Nothing expiring soon.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

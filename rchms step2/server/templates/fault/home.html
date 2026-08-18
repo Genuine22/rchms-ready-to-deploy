@@ -1,0 +1,154 @@
+{% extends "base.html" %}
+{% block title %}Fault Management{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <h1 class="page-title"><i data-lucide="life-buoy" style="width:22px;height:22px;vertical-align:-3px;"></i> Fault Management</h1>
+        <p class="page-subtitle">ISP-style helpdesk for every fault reported against a Starlink connection.</p>
+    </div>
+    <div class="d-flex gap-2">
+        <a href="{{ url_for('fault.new_ticket') }}" class="btn btn-gold btn-sm"><i data-lucide="plus"></i> New Ticket</a>
+        <a href="{{ url_for('fault.technician_home') }}" class="btn btn-outline-secondary btn-sm">My Tickets</a>
+        <a href="{{ url_for('fault.list_tickets') }}" class="btn btn-outline-secondary btn-sm">All Tickets</a>
+    </div>
+</div>
+
+<div class="row mb-3 g-3">
+    <div class="col-md-3 col-sm-6">
+        <a href="{{ url_for('fault.list_tickets', status='open') }}" class="stat-card">
+            <div class="stat-label">Open Tickets</div>
+            <div class="stat-value">{{ open_tickets }}</div>
+        </a>
+    </div>
+    <div class="col-md-3 col-sm-6">
+        <a href="{{ url_for('fault.list_tickets', priority='critical') }}" class="stat-card">
+            <div class="stat-label">Critical Tickets</div>
+            <div class="stat-value" style="color: var(--danger);">{{ critical_tickets }}</div>
+        </a>
+    </div>
+    <div class="col-md-3 col-sm-6">
+        <div class="stat-card">
+            <div class="stat-label">Resolved Today</div>
+            <div class="stat-value" style="color: var(--emerald);">{{ resolved_today }}</div>
+        </div>
+    </div>
+    <div class="col-md-3 col-sm-6">
+        <div class="stat-card">
+            <div class="stat-label">Avg Resolution Time</div>
+            <div class="stat-value" style="font-size:1.3rem;">{{ (avg_resolution_hours ~ ' hrs') if avg_resolution_hours is not none else '—' }}</div>
+        </div>
+    </div>
+    <div class="col-md-3 col-sm-6">
+        <a href="{{ url_for('fault.list_tickets') }}?technician_id=" class="stat-card">
+            <div class="stat-label">Pending Technician Assignment</div>
+            <div class="stat-value" style="color: var(--warning);">{{ pending_assignment }}</div>
+        </a>
+    </div>
+</div>
+
+<div class="row g-3 mb-3">
+    <div class="col-lg-4">
+        <div class="card h-100">
+            <div class="card-body">
+                <h6 class="mb-3">Tickets by Category</h6>
+                <canvas id="categoryChart" height="200"></canvas>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-4">
+        <div class="card h-100">
+            <div class="card-body">
+                <h6 class="mb-3">Tickets by Priority</h6>
+                <canvas id="priorityChart" height="200"></canvas>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-4">
+        <div class="card h-100">
+            <div class="card-body">
+                <h6 class="mb-3">Tickets by Region</h6>
+                <canvas id="regionChart" height="200"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-3">
+    <div class="col-lg-5">
+        <div class="card h-100">
+            <div class="card-body">
+                <h6 class="mb-3">Monthly Trend</h6>
+                <canvas id="trendChart" height="180"></canvas>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-7">
+        <div class="card h-100">
+            <div class="card-body p-0">
+                <h6 class="p-3 pb-0 mb-0">Recent Tickets</h6>
+                <table class="table table-hover mb-0">
+                    <thead class="table-light">
+                        <tr><th>Ticket</th><th>Customer</th><th>Priority</th><th>Status</th></tr>
+                    </thead>
+                    <tbody>
+                        {% for t in recent_tickets %}
+                        <tr>
+                            <td><a href="{{ url_for('fault.view_ticket', ticket_id=t.ticket_id) }}">{{ t.ticket_number }}</a></td>
+                            <td class="text-muted">{{ t.subscriber.full_name }}</td>
+                            <td>
+                                <span class="badge {{ {'critical':'bg-danger','high':'bg-warning','medium':'bg-info','low':'bg-success'}[t.priority] }}">{{ t.priority|title }}</span>
+                            </td>
+                            <td><span class="badge" style="background: var(--gold-glow); color: var(--gold-bright);">{{ t.status.replace('_',' ')|title }}</span></td>
+                        </tr>
+                        {% else %}
+                        <tr><td colspan="4" class="text-center text-muted py-4">No tickets yet.</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+<script>
+const goldBright = getComputedStyle(document.documentElement).getPropertyValue('--gold-bright').trim() || '#F5C542';
+const palette = ['#D4AF37', '#10B981', '#3B82F6', '#F59E0B', '#EF4444', '#8B5CF6', '#EC4899', '#14B8A6', '#F97316'];
+
+function makeDoughnut(id, labels, values) {
+    const el = document.getElementById(id);
+    if (!el || !labels.length) return;
+    new Chart(el, {
+        type: 'doughnut',
+        data: { labels: labels, datasets: [{ data: values, backgroundColor: palette }] },
+        options: { plugins: { legend: { position: 'bottom', labels: { boxWidth: 10, font: { size: 10 } } } } }
+    });
+}
+
+makeDoughnut('categoryChart',
+    {{ by_category.keys()|list|map('replace', '_', ' ')|map('title')|list|tojson }},
+    {{ by_category.values()|list|tojson }});
+makeDoughnut('priorityChart',
+    {{ by_priority.keys()|list|map('title')|list|tojson }},
+    {{ by_priority.values()|list|tojson }});
+makeDoughnut('regionChart',
+    {{ by_region.keys()|list|tojson }},
+    {{ by_region.values()|list|tojson }});
+
+const trendEl = document.getElementById('trendChart');
+if (trendEl) {
+    new Chart(trendEl, {
+        type: 'line',
+        data: {
+            labels: {{ monthly_trend|map(attribute=0)|list|tojson }},
+            datasets: [{
+                label: 'Tickets Created', data: {{ monthly_trend|map(attribute=1)|list|tojson }},
+                borderColor: '#D4AF37', backgroundColor: 'rgba(212,175,55,0.15)', fill: true, tension: 0.3
+            }]
+        },
+        options: { plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, ticks: { precision: 0 } } } }
+    });
+}
+</script>
+{% endblock %}

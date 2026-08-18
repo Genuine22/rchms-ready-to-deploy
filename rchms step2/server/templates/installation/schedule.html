@@ -1,0 +1,87 @@
+{% extends "base.html" %}
+{% block title %}Schedule{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <h1 class="page-title"><i data-lucide="calendar-days" style="width:22px;height:22px;vertical-align:-3px;"></i> Schedule</h1>
+        <p class="page-subtitle">Upcoming site surveys and installation jobs — {{ month_name }} {{ year }}.</p>
+    </div>
+    <a href="{{ url_for('installation.home') }}" class="btn btn-outline-secondary btn-sm">Back to Installation</a>
+</div>
+
+<div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+    <div class="d-flex gap-2">
+        <a href="{{ url_for('installation.schedule', month=prev_month, year=prev_year, technician_id=technician_id) }}" class="btn btn-sm btn-outline-secondary">
+            <i data-lucide="chevron-left"></i> {{ '' }}
+        </a>
+        <a href="{{ url_for('installation.schedule', technician_id=technician_id) }}" class="btn btn-sm btn-outline-secondary">Today</a>
+        <a href="{{ url_for('installation.schedule', month=next_month, year=next_year, technician_id=technician_id) }}" class="btn btn-sm btn-outline-secondary">
+            <i data-lucide="chevron-right"></i>
+        </a>
+    </div>
+    <form method="GET" action="{{ url_for('installation.schedule') }}" class="d-flex gap-2 align-items-center">
+        <input type="hidden" name="month" value="{{ month }}">
+        <input type="hidden" name="year" value="{{ year }}">
+        <select class="form-select form-select-sm" name="technician_id" onchange="this.form.submit()">
+            <option value="">All Technicians</option>
+            {% for member in staff %}
+            <option value="{{ member.user_id }}" {% if technician_id == member.user_id %}selected{% endif %}>{{ member.full_name }}</option>
+            {% endfor %}
+        </select>
+    </form>
+</div>
+
+<div class="d-flex gap-3 mb-3 flex-wrap" style="font-size: 0.8rem;">
+    <span><i data-lucide="map-pin" style="width:13px;height:13px;color:var(--info,#3B82F6);"></i> Site Survey</span>
+    <span><i data-lucide="hard-hat" style="width:13px;height:13px;color:var(--gold-bright);"></i> Installation Job</span>
+    <span class="text-muted">Priority: <span class="badge bg-danger">Urgent</span> <span class="badge bg-warning">High</span> <span class="badge" style="background: var(--gold-glow); color: var(--gold-bright);">Normal</span> <span class="badge bg-secondary">Low</span></span>
+</div>
+
+<div class="card">
+    <div class="card-body p-2">
+        <table class="table table-bordered mb-0" style="table-layout: fixed;">
+            <thead>
+                <tr class="text-center">
+                    <th>Sun</th><th>Mon</th><th>Tue</th><th>Wed</th><th>Thu</th><th>Fri</th><th>Sat</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for week in weeks %}
+                <tr>
+                    {% for day in week %}
+                    <td style="height: 110px; vertical-align: top; {% if day == 0 %}background: var(--bg-2, #00000008);{% endif %}">
+                        {% if day != 0 %}
+                        <div class="d-flex justify-content-between">
+                            <span class="{{ 'fw-bold' if (day == today.day and month == today.month and year == today.year) else 'text-muted' }}" style="font-size: 0.8rem;">{{ day }}</span>
+                        </div>
+                        <div class="d-flex flex-column gap-1 mt-1">
+                            {% for event in events_by_day.get(day, [])[:3] %}
+                                {% set obj = event.obj %}
+                                {% if event.type == 'survey' %}
+                                <a href="{{ url_for('installation.view_survey', survey_id=obj.survey_id) }}" class="badge text-truncate d-block text-start" style="background: rgba(59,130,246,0.15); color: #3B82F6; font-weight: normal;" title="{{ obj.subscriber.full_name }} — {{ obj.surveyor.full_name if obj.surveyor else 'Unassigned' }}">
+                                    <i data-lucide="map-pin" style="width:10px;height:10px;"></i> {{ obj.subscriber.full_name }}
+                                </a>
+                                {% else %}
+                                <a href="{{ url_for('installation.view_job', job_id=obj.installation_id) }}" class="badge text-truncate d-block text-start"
+                                   style="background: {{ {'urgent': 'rgba(239,68,68,0.15)', 'high': 'rgba(245,158,11,0.15)', 'normal': 'var(--gold-glow)', 'low': 'rgba(107,114,128,0.15)'}[obj.priority] }};
+                                          color: {{ {'urgent': 'var(--danger)', 'high': 'var(--warning)', 'normal': 'var(--gold-bright)', 'low': '#6B7280'}[obj.priority] }}; font-weight: normal;"
+                                   title="{{ obj.subscriber.full_name }} — {{ obj.technician.full_name if obj.technician else 'Unassigned' }} ({{ obj.priority|title }})">
+                                    <i data-lucide="hard-hat" style="width:10px;height:10px;"></i> {{ obj.subscriber.full_name }}
+                                </a>
+                                {% endif %}
+                            {% endfor %}
+                            {% if events_by_day.get(day, [])|length > 3 %}
+                            <span class="text-muted" style="font-size: 0.7rem;">+{{ events_by_day.get(day, [])|length - 3 }} more</span>
+                            {% endif %}
+                        </div>
+                        {% endif %}
+                    </td>
+                    {% endfor %}
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

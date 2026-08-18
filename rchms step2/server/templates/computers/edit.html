@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% block title %}Edit Computer{% endblock %}
+
+{% block content %}
+<div class="form-shell">
+    <div class="form-shell-icon"><i data-lucide="pencil"></i></div>
+    <h1 class="page-title" style="font-size: 1.4rem;">Edit Computer</h1>
+    <p class="page-subtitle mb-4">{{ computer.name }}</p>
+
+    <div class="card">
+        <div class="card-body p-4">
+            <form method="POST" action="{{ url_for('computers.edit_computer', computer_id=computer.computer_id) }}">
+                <div class="mb-3">
+                    <label class="form-label">Computer Name</label>
+                    <input type="text" class="form-control" name="name" value="{{ computer.name }}" required>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Type</label>
+                    <select class="form-select" name="computer_type">
+                        <option value="browsing" {% if computer.computer_type == 'browsing' %}selected{% endif %}>Browsing</option>
+                        <option value="gaming" {% if computer.computer_type == 'gaming' %}selected{% endif %}>Gaming</option>
+                    </select>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">IP Address</label>
+                    <input type="text" class="form-control" name="ip_address" value="{{ computer.ip_address or '' }}" placeholder="e.g. 192.168.1.10">
+                </div>
+                <div class="d-flex gap-2 mt-4">
+                    <button type="submit" class="btn btn-brand">Save Changes</button>
+                    <a href="{{ url_for('computers.list_computers') }}" class="btn btn-outline-secondary">Cancel</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

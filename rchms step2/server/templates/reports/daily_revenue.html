@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+{% block title %}Daily Revenue Report{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <h1 class="page-title"><i data-lucide="trending-up" style="width:22px;height:22px;vertical-align:-3px;"></i> Daily Revenue Report</h1>
+        <p class="page-subtitle">{{ from_date }} to {{ to_date }}</p>
+    </div>
+    <a href="{{ url_for('reports.reports_home') }}" class="btn btn-outline-secondary btn-sm">Back to Reports</a>
+</div>
+
+<div class="stat-card mb-4" style="max-width: 320px;">
+    <div class="stat-label">Total for this period</div>
+    <div class="stat-value" style="color: var(--color-forest);">GHS {{ "%.2f"|format(grand_total) }}</div>
+</div>
+
+<div class="card">
+    <div class="card-body p-0">
+        <table class="table table-hover mb-0">
+            <thead class="table-light">
+                <tr>
+                    <th>Date</th>
+                    <th>Sessions Revenue</th>
+                    <th>Business Centre Revenue</th>
+                    <th>Total</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for row in rows %}
+                <tr>
+                    <td>{{ row.date.strftime('%d %b %Y') }}</td>
+                    <td class="text-muted">GHS {{ "%.2f"|format(row.payments) }}</td>
+                    <td class="text-muted">GHS {{ "%.2f"|format(row.printing) }}</td>
+                    <td><strong>GHS {{ "%.2f"|format(row.total) }}</strong></td>
+                </tr>
+                {% else %}
+                <tr><td colspan="4" class="text-center text-muted py-4">No data for this range.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

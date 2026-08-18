@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+{% block title %}Equipment — {{ job.subscriber.full_name }}{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="page-header">
+            <div>
+                <h1 class="page-title" style="font-size: 1.4rem;">Equipment</h1>
+                <p class="page-subtitle mb-0">{{ job.subscriber.full_name }}'s installation job</p>
+            </div>
+            <a href="{{ url_for('installation.view_job', job_id=job.installation_id) }}" class="btn btn-outline-secondary btn-sm">
+                <i data-lucide="arrow-left"></i> Back to Job
+            </a>
+        </div>
+
+        <div class="card">
+            <div class="card-body p-4">
+                <dl class="row mb-0">
+                    <dt class="col-sm-4">Dish Serial</dt>
+                    <dd class="col-sm-8">{{ assignment.dish_serial or '-' }}</dd>
+
+                    <dt class="col-sm-4">Router Serial</dt>
+                    <dd class="col-sm-8">{{ assignment.router_serial or '-' }}</dd>
+
+                    <dt class="col-sm-4">Cable Length</dt>
+                    <dd class="col-sm-8">{{ assignment.cable_length ~ ' m' if assignment.cable_length is not none else '-' }}</dd>
+
+                    <dt class="col-sm-4">Mount Type</dt>
+                    <dd class="col-sm-8">{{ assignment.mount_type or '-' }}</dd>
+
+                    <dt class="col-sm-4">Assigned By</dt>
+                    <dd class="col-sm-8">{{ assignment.assigner.full_name if assignment.assigner else '-' }}</dd>
+
+                    <dt class="col-sm-4">Assigned Date</dt>
+                    <dd class="col-sm-8">{{ assignment.assigned_date.strftime('%d %b %Y') }}</dd>
+                </dl>
+
+                <div class="mt-4">
+                    <a href="{{ url_for('installation.new_equipment', job_id=job.installation_id) }}" class="btn btn-outline-primary btn-sm">
+                        <i data-lucide="plus"></i> Assign Different Kit
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

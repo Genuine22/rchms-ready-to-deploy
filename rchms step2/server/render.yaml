@@ -1,0 +1,32 @@
+# Render Blueprint — optional, lets Render auto-configure the service
+# when you use "New +" -> "Blueprint" and point it at this repo.
+# You can also skip this file entirely and set everything up by hand
+# in the Render dashboard (see deploy/DEPLOY.md) — both work fine.
+
+services:
+  - type: web
+    name: rchms
+    runtime: python
+    plan: free
+    rootDir: server
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn run:app --bind 0.0.0.0:$PORT --workers 3
+    envVars:
+      - key: DB_HOST
+        sync: false
+      - key: DB_PORT
+        value: "3306"
+      - key: DB_USER
+        sync: false
+      - key: DB_PASSWORD
+        sync: false
+      - key: DB_NAME
+        sync: false
+      - key: DB_SSL_REQUIRED
+        value: "true"
+      - key: SECRET_KEY
+        generateValue: true
+      - key: DEBUG_MODE
+        value: "false"
+      - key: PYTHON_VERSION
+        value: "3.12.0"

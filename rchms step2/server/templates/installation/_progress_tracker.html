@@ -1,0 +1,24 @@
+{# Expects: job, tracker_steps, progress_percent #}
+{% if job.status == 'cancelled' %}
+<div class="alert alert-danger d-flex align-items-center gap-2 mb-4">
+    <i data-lucide="x-circle"></i>
+    <span>This installation was cancelled{% if job.installation_date %} (was set for {{ job.installation_date.strftime('%d %b %Y') }}){% endif %}.</span>
+</div>
+{% else %}
+<div class="tracker mb-4">
+    <div class="tracker-line"></div>
+    <div class="tracker-line-fill" style="width: {{ progress_percent }}%;"></div>
+    {% for step in tracker_steps %}
+    <div class="tracker-step {% if step.done %}done{% elif step.current %}current{% endif %}">
+        <div class="circle">
+            {% if step.done %}
+                <i data-lucide="check"></i>
+            {% else %}
+                <i data-lucide="{{ step.icon }}"></i>
+            {% endif %}
+        </div>
+        <div class="tracker-label">{{ step.label }}</div>
+    </div>
+    {% endfor %}
+</div>
+{% endif %}

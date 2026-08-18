@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+{% block title %}Payments{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <h1 class="page-title">Payments</h1>
+        <p class="page-subtitle">Cafe payments - cash, mobile money, membership.</p>
+    </div>
+    <a href="{{ url_for('payments.record_payment') }}" class="btn btn-brand">+ Record Payment</a>
+</div>
+
+<div class="d-flex justify-content-between align-items-center flex-wrap gap-3 mb-4">
+    <form method="GET" action="{{ url_for('payments.list_payments') }}" class="d-flex gap-2 align-items-center">
+        <label class="form-label mb-0">Date:</label>
+        <input type="date" name="date" class="form-control" style="max-width: 200px;" value="{{ filter_date }}"
+               onchange="this.form.submit()">
+    </form>
+
+    <div class="stat-card py-2 px-3" style="min-width: 220px;">
+        <div class="stat-label mb-0">Total this day</div>
+        <div class="stat-value" style="font-size: 1.4rem; color: var(--color-forest);">
+            GHS {{ "%.2f"|format(total) }}
+            <span class="text-muted" style="font-size: 0.75rem; font-weight: 500;">({{ payments|length }} payment{{ 's' if payments|length != 1 else '' }})</span>
+        </div>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-body p-0">
+        <table class="table table-hover mb-0">
+            <thead class="table-light">
+                <tr>
+                    <th>Receipt No.</th>
+                    <th>Customer</th>
+                    <th>Amount</th>
+                    <th>Method</th>
+                    <th>Time</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for payment in payments %}
+                <tr>
+                    <td><code>{{ payment.receipt_number or '-' }}</code></td>
+                    <td>
+                        <a href="{{ url_for('customers.view_customer', customer_id=payment.customer_id) }}">
+                            {{ payment.customer.full_name }}
+                        </a>
+                    </td>
+                    <td><strong>GHS {{ "%.2f"|format(payment.amount) }}</strong></td>
+                    <td class="text-muted">{{ payment.payment_method.replace('_', ' ')|title }}</td>
+                    <td class="text-muted">{{ payment.paid_at.strftime('%I:%M %p') }}</td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="5" class="text-center text-muted py-4">No payments recorded for this date.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

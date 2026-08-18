@@ -1,0 +1,80 @@
+{% extends "base.html" %}
+{% block title %}New Fault Ticket{% endblock %}
+
+{% block content %}
+<div class="form-shell" style="max-width: 720px;">
+    <div class="form-shell-icon gold"><i data-lucide="life-buoy"></i></div>
+    <h1 class="page-title" style="font-size: 1.4rem;">New Fault Ticket</h1>
+    <p class="page-subtitle mb-4">Log a fault reported against a Starlink connection.</p>
+
+    <div class="card">
+        <div class="card-body p-4">
+            <form method="POST" action="{{ url_for('fault.new_ticket') }}">
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label">Customer *</label>
+                        <select class="form-select" name="subscriber_id" required>
+                            <option value="" disabled {% if not preselected_subscriber %}selected{% endif %}>Select a customer…</option>
+                            {% for s in subscribers %}
+                            <option value="{{ s.subscriber_id }}" {% if preselected_subscriber == s.subscriber_id %}selected{% endif %}>{{ s.full_name }} — {{ s.phone_number }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label">Assign Technician</label>
+                        <select class="form-select" name="assigned_technician_id">
+                            <option value="">Unassigned</option>
+                            {% for member in staff %}
+                            <option value="{{ member.user_id }}">{{ member.full_name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-4 mb-3">
+                        <label class="form-label">Fault Category</label>
+                        <select class="form-select" name="category">
+                            {% for c in categories %}
+                            <option value="{{ c }}">{{ c.replace('_',' ')|title }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <label class="form-label">Priority</label>
+                        <select class="form-select" name="priority">
+                            {% for p in priorities %}
+                            <option value="{{ p }}" {% if p == 'medium' %}selected{% endif %}>{{ p|title }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <label class="form-label">Expected Resolution</label>
+                        <input type="datetime-local" class="form-control" name="expected_resolution">
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">Subject</label>
+                    <input type="text" class="form-control" name="subject" placeholder="Short summary of the issue">
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">Description</label>
+                    <textarea class="form-control" name="description" rows="3" placeholder="What the customer reported"></textarea>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">GPS Location</label>
+                    <input type="text" class="form-control" name="gps_location" placeholder="lat, long (optional)">
+                </div>
+
+                <div class="d-flex gap-2 mt-4">
+                    <button type="submit" class="btn btn-gold">Create Ticket</button>
+                    <a href="{{ url_for('fault.list_tickets') }}" class="btn btn-outline-secondary">Cancel</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

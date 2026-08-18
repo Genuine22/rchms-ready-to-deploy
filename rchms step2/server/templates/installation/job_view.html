@@ -1,0 +1,78 @@
+{% extends "base.html" %}
+{% block title %}Installation Job — {{ job.subscriber.full_name }}{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="page-header">
+            <div>
+                <h1 class="page-title" style="font-size: 1.4rem;">Installation Job</h1>
+                <p class="page-subtitle mb-0">{{ job.subscriber.full_name }} &middot; {{ job.subscriber.phone_number }}</p>
+            </div>
+            <a href="{{ url_for('starlink.view_subscriber', subscriber_id=job.subscriber_id) }}" class="btn btn-outline-secondary btn-sm">
+                <i data-lucide="arrow-left"></i> Back to Member
+            </a>
+        </div>
+
+        <div class="card mb-3">
+            <div class="card-body p-4">
+                {% include "installation/_progress_tracker.html" %}
+
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <span class="badge" style="background: var(--gold-glow); color: var(--gold-bright);">
+                        {{ job.status.replace('_', ' ')|title }}
+                    </span>
+                    <span class="badge" style="background: rgba(26,26,26,0.06); color: var(--color-ink);">
+                        {{ job.priority|title }} priority
+                    </span>
+                </div>
+
+                <dl class="row mb-0">
+                    <dt class="col-sm-4">Technician</dt>
+                    <dd class="col-sm-8">{{ job.technician.full_name if job.technician else 'Not assigned' }}</dd>
+
+                    <dt class="col-sm-4">Installation Date</dt>
+                    <dd class="col-sm-8">{{ job.installation_date.strftime('%d %b %Y') if job.installation_date else 'Not scheduled' }}</dd>
+
+                    <dt class="col-sm-4">Linked Survey</dt>
+                    <dd class="col-sm-8">
+                        {% if job.survey %}
+                        <a href="{{ url_for('installation.view_survey', survey_id=job.survey_id) }}">View survey</a>
+                        {% else %}
+                        None
+                        {% endif %}
+                    </dd>
+
+                    <dt class="col-sm-4">Notes</dt>
+                    <dd class="col-sm-8">{{ job.notes or '-' }}</dd>
+
+                    <dt class="col-sm-4">Created</dt>
+                    <dd class="col-sm-8">{{ job.created_at.strftime('%d %b %Y, %I:%M %p') }}</dd>
+                </dl>
+
+                <form method="POST" action="{{ url_for('installation.update_job_status', job_id=job.installation_id) }}" class="d-flex gap-2 align-items-center mt-4">
+                    <label class="form-label mb-0">Update status</label>
+                    <select class="form-select form-select-sm" style="width: auto;" name="status">
+                        {% for s in statuses %}
+                        <option value="{{ s }}" {% if s == job.status %}selected{% endif %}>{{ s.replace('_', ' ')|title }}</option>
+                        {% endfor %}
+                    </select>
+                    <button type="submit" class="btn btn-sm btn-outline-primary">Update</button>
+                </form>
+            </div>
+        </div>
+
+        <div class="d-flex gap-2 flex-wrap">
+            <a href="{{ url_for('installation.job_equipment', job_id=job.installation_id) }}" class="btn btn-outline-primary btn-sm">
+                <i data-lucide="package"></i> Assign Equipment
+            </a>
+            <a href="{{ url_for('installation.job_equipment_lines', job_id=job.installation_id) }}" class="btn btn-outline-primary btn-sm">
+                <i data-lucide="boxes"></i> Equipment Assignment (Inventory){% if job.equipment_lines %} &middot; {{ job.equipment_lines|length }}{% endif %}
+            </a>
+            <a href="{{ url_for('installation.job_report', job_id=job.installation_id) }}" class="btn btn-outline-primary btn-sm">
+                <i data-lucide="file-text"></i> Installation Report
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,70 @@
+{% extends "base.html" %}
+{% block title %}Start Session{% endblock %}
+
+{% block content %}
+<div class="form-shell" style="max-width: 560px;">
+    <div class="form-shell-icon">⏱</div>
+    <h1 class="page-title" style="font-size: 1.4rem;">Start a Session</h1>
+    <p class="page-subtitle mb-4">Pick a customer, a computer, and a time package.</p>
+
+    <div class="card">
+        <div class="card-body p-4">
+            {% if not computers %}
+                <div class="alert alert-warning">
+                    No computers are currently available. Check the
+                    <a href="{{ url_for('computers.list_computers') }}">Computers</a> page.
+                </div>
+            {% endif %}
+
+            <form method="POST" action="{{ url_for('sessions.start_session') }}">
+                <div class="mb-3">
+                    <label class="form-label">Customer</label>
+                    <select class="form-select" name="customer_id" required>
+                        <option value="" disabled selected>Select a customer...</option>
+                        {% for customer in customers %}
+                        <option value="{{ customer.customer_id }}">
+                            {{ customer.full_name }} ({{ customer.membership_code }}) - {{ customer.phone_number }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                    <div class="form-text">
+                        Don't see them? <a href="{{ url_for('customers.register') }}">Register a new customer</a>.
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">Computer</label>
+                    <select class="form-select" name="computer_id" required>
+                        <option value="" disabled selected>Select a computer...</option>
+                        {% for computer in computers %}
+                        <option value="{{ computer.computer_id }}"
+                            {% if preselected_computer == computer.computer_id %}selected{% endif %}>
+                            {{ computer.name }} ({{ computer.computer_type|title }})
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">Package</label>
+                    <select class="form-select" name="service_id" required>
+                        <option value="" disabled selected>Select a package...</option>
+                        {% for service in services %}
+                        <option value="{{ service.service_id }}">
+                            {{ service.service_name }} - GHS {{ "%.2f"|format(service.price) }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="d-flex gap-2 mt-4">
+                    <button type="submit" class="btn btn-brand" {% if not computers %}disabled{% endif %}>
+                        Start Session
+                    </button>
+                    <a href="{{ url_for('sessions.list_sessions') }}" class="btn btn-outline-secondary">Cancel</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

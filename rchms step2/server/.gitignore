@@ -1,0 +1,16 @@
+# Never commit real secrets
+.env
+
+# Python
+venv/
+__pycache__/
+*.pyc
+
+# Logs
+logs/
+*.log
+server_log.txt
+
+# OS
+.DS_Store
+Thumbs.db

@@ -1,0 +1,91 @@
+{% extends "base.html" %}
+{% block title %}{{ customer.full_name }}{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-start mb-3">
+    <div>
+        <h4 class="mb-0">{{ customer.full_name }}</h4>
+        <p class="text-muted mb-0">
+            {{ customer.membership_code }} &middot; {{ customer.phone_number }}
+            {% if customer.is_active %}
+                <span class="badge ms-2" style="background: color-mix(in srgb, var(--color-success) 14%, var(--color-surface)); color: var(--color-success);">Active</span>
+            {% else %}
+                <span class="badge ms-2" style="background: color-mix(in srgb, var(--color-ink-muted) 12%, var(--color-surface)); color: var(--color-ink-muted);">Inactive</span>
+            {% endif %}
+        </p>
+    </div>
+    <div>
+        <a href="{{ url_for('customers.edit_customer', customer_id=customer.customer_id) }}"
+           class="btn btn-outline-secondary btn-sm">Edit</a>
+        <form method="POST" action="{{ url_for('customers.toggle_active', customer_id=customer.customer_id) }}"
+              class="d-inline">
+            {% if customer.is_active %}
+                <button type="submit" class="btn btn-outline-danger btn-sm">Deactivate</button>
+            {% else %}
+                <button type="submit" class="btn btn-outline-success btn-sm">Activate</button>
+            {% endif %}
+        </form>
+        <a href="{{ url_for('customers.list_customers') }}" class="btn btn-outline-secondary btn-sm">Back</a>
+    </div>
+</div>
+
+<p class="text-muted">Registered on {{ customer.date_registered.strftime('%d %b %Y, %I:%M %p') }}</p>
+
+<h6 class="mt-4">Session History</h6>
+<div class="card mb-4">
+    <div class="card-body p-0">
+        <table class="table mb-0">
+            <thead class="table-light">
+                <tr>
+                    <th>Computer</th>
+                    <th>Service</th>
+                    <th>Started</th>
+                    <th>Ends</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for session in sessions %}
+                <tr>
+                    <td>{{ session.computer.name }}</td>
+                    <td>{{ session.service.service_name if session.service else "Deleted package" }}</td>
+                    <td>{{ session.started_at.strftime('%d %b, %I:%M %p') }}</td>
+                    <td>{{ session.ends_at.strftime('%d %b, %I:%M %p') }}</td>
+                    <td>{{ session.status }}</td>
+                </tr>
+                {% else %}
+                <tr><td colspan="5" class="text-center text-muted py-3">No sessions yet.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<h6>Payment History</h6>
+<div class="card">
+    <div class="card-body p-0">
+        <table class="table mb-0">
+            <thead class="table-light">
+                <tr>
+                    <th>Amount</th>
+                    <th>Method</th>
+                    <th>Receipt No.</th>
+                    <th>Date</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for payment in payments %}
+                <tr>
+                    <td>GHS {{ "%.2f"|format(payment.amount) }}</td>
+                    <td>{{ payment.payment_method.replace('_', ' ')|title }}</td>
+                    <td>{{ payment.receipt_number or '-' }}</td>
+                    <td>{{ payment.paid_at.strftime('%d %b, %I:%M %p') }}</td>
+                </tr>
+                {% else %}
+                <tr><td colspan="4" class="text-center text-muted py-3">No payments yet.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

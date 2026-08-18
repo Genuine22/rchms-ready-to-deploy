@@ -1,0 +1,79 @@
+{% extends "base.html" %}
+{% block title %}Starlink Subscriptions{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1 class="page-title"><i data-lucide="clipboard-list" style="width:22px;height:22px;vertical-align:-3px;"></i> Starlink Subscriptions</h1>
+    <a href="{{ url_for('starlink.new_subscription') }}" class="btn btn-brand">
+        + New Subscription
+    </a>
+</div>
+
+<ul class="nav nav-pills mb-3">
+    <li class="nav-item">
+        <a class="nav-link {% if not status_filter %}active{% endif %}"
+           href="{{ url_for('starlink.list_subscriptions') }}">All</a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link {% if status_filter == 'active' %}active{% endif %}"
+           href="{{ url_for('starlink.list_subscriptions', status='active') }}">Active</a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link {% if status_filter == 'pending_payment' %}active{% endif %}"
+           href="{{ url_for('starlink.list_subscriptions', status='pending_payment') }}">Awaiting Payment</a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link {% if status_filter == 'expired' %}active{% endif %}"
+           href="{{ url_for('starlink.list_subscriptions', status='expired') }}">Expired</a>
+    </li>
+</ul>
+
+<div class="card">
+    <div class="card-body p-0">
+        <table class="table table-hover mb-0">
+            <thead class="table-light">
+                <tr>
+                    <th>Voucher</th>
+                    <th>Subscriber</th>
+                    <th>Plan</th>
+                    <th>Starts</th>
+                    <th>Ends</th>
+                    <th>Status</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for sub in subscriptions %}
+                <tr>
+                    <td>
+                        <code>{{ sub.voucher_username or '—' }}</code><br>
+                        <code class="text-muted" style="font-size: 0.8em;">{{ sub.voucher_code }}</code>
+                    </td>
+                    <td>{{ sub.subscriber.full_name }}</td>
+                    <td>{{ sub.plan.plan_name if sub.plan else "Deleted plan" }}</td>
+                    <td>{{ sub.starts_at.strftime('%d %b %Y') }}</td>
+                    <td>{{ sub.ends_at.strftime('%d %b %Y') }}</td>
+                    <td>
+                        {% if sub.status == 'active' %}
+                            <span class="badge" style="background: color-mix(in srgb, var(--color-success) 14%, var(--color-surface)); color: var(--color-success);">Active</span>
+                        {% elif sub.status == 'pending_payment' %}
+                            <span class="badge" style="background: color-mix(in srgb, var(--color-gold) 18%, var(--color-surface)); color: var(--color-gold-dark);">Awaiting Payment</span>
+                        {% elif sub.status == 'expired' %}
+                            <span class="badge" style="background: color-mix(in srgb, var(--color-ink-muted) 12%, var(--color-surface)); color: var(--color-ink-muted);">Expired</span>
+                        {% else %}
+                            <span class="badge" style="background: rgba(26,26,26,0.08); color: var(--color-ink);">Cancelled</span>
+                        {% endif %}
+                    </td>
+                    <td class="text-end">
+                        <a href="{{ url_for('starlink.view_subscription', subscription_id=sub.subscription_id) }}"
+                           class="btn btn-sm btn-outline-primary">View</a>
+                    </td>
+                </tr>
+                {% else %}
+                <tr><td colspan="7" class="text-center text-muted py-4">No subscriptions found.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

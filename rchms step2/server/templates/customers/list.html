@@ -1,0 +1,85 @@
+{% extends "base.html" %}
+{% block title %}Customers{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <h1 class="page-title">Customers</h1>
+        <p class="page-subtitle">
+            {% if registered_filter == 'today' %}
+                {{ customers|length }} customer{{ 's' if customers|length != 1 else '' }} registered today.
+            {% else %}
+                {{ customers|length }} registered customer{{ 's' if customers|length != 1 else '' }}.
+            {% endif %}
+        </p>
+    </div>
+    <a href="{{ url_for('customers.register') }}" class="btn btn-brand">+ Register Customer</a>
+</div>
+
+{% if registered_filter == 'today' %}
+<div class="alert alert-info d-flex justify-content-between align-items-center mb-3">
+    <span>Showing customers registered today.</span>
+    <a href="{{ url_for('customers.list_customers') }}" class="btn btn-sm btn-outline-secondary">View All Customers</a>
+</div>
+{% endif %}
+
+<form method="GET" action="{{ url_for('customers.list_customers') }}" class="mb-3">
+    <div class="search-bar">
+        <i data-lucide="search" class="search-icon"></i>
+        <input type="text" name="q" placeholder="Search by name, phone, or membership ID" value="{{ search }}">
+        <button class="btn btn-sm btn-outline-secondary" type="submit">Search</button>
+        {% if search %}
+        <a href="{{ url_for('customers.list_customers') }}" class="btn btn-sm btn-outline-secondary">Clear</a>
+        {% endif %}
+    </div>
+</form>
+
+<div class="card">
+    <div class="card-body p-0">
+        <table class="table table-hover mb-0">
+            <thead class="table-light">
+                <tr>
+                    <th>Customer</th>
+                    <th>Membership ID</th>
+                    <th>Phone Number</th>
+                    <th>Date Registered</th>
+                    <th>Status</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for customer in customers %}
+                <tr>
+                    <td>
+                        <div class="d-flex align-items-center gap-2">
+                            <span class="avatar-initial" style="background: hsl({{ (customer.customer_id * 47) % 360 }}, 45%, 42%);">
+                                {{ customer.full_name[0]|upper }}
+                            </span>
+                            <span>{{ customer.full_name }}</span>
+                        </div>
+                    </td>
+                    <td><code>{{ customer.membership_code }}</code></td>
+                    <td>{{ customer.phone_number }}</td>
+                    <td class="text-muted">{{ customer.date_registered.strftime('%d %b %Y') }}</td>
+                    <td>
+                        {% if customer.is_active %}
+                            <span class="badge" style="background: color-mix(in srgb, var(--color-success) 14%, var(--color-surface)); color: var(--color-success);">Active</span>
+                        {% else %}
+                            <span class="badge" style="background: color-mix(in srgb, var(--color-ink-muted) 12%, var(--color-surface)); color: var(--color-ink-muted);">Inactive</span>
+                        {% endif %}
+                    </td>
+                    <td class="text-end">
+                        <a href="{{ url_for('customers.view_customer', customer_id=customer.customer_id) }}"
+                           class="btn btn-sm btn-outline-primary">View</a>
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="6" class="text-center text-muted py-4">No customers found.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

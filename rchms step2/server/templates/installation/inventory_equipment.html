@@ -1,0 +1,88 @@
+{% extends "base.html" %}
+{% block title %}Equipment Assignment — {{ job.subscriber.full_name }}{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-9">
+        <div class="page-header">
+            <div>
+                <h1 class="page-title" style="font-size: 1.4rem;">Equipment Assignment</h1>
+                <p class="page-subtitle mb-0">{{ job.subscriber.full_name }}'s installation job &middot; Status: {{ job.status.replace('_', ' ')|title }}</p>
+            </div>
+            <a href="{{ url_for('installation.view_job', job_id=job.installation_id) }}" class="btn btn-outline-secondary btn-sm">
+                <i data-lucide="arrow-left"></i> Back to Job
+            </a>
+        </div>
+
+        <p class="text-muted small">
+            <i data-lucide="info" style="width:14px;height:14px;"></i>
+            Pick equipment from warehouse stock below. Nothing is deducted from inventory yet — that happens automatically
+            the moment this job is marked <strong>Completed</strong>. If the job is cancelled or a line is removed after
+            completion, the stock is restored automatically too.
+        </p>
+
+        <div class="card mb-3">
+            <div class="card-body">
+                <h6 class="mb-3">Assign Equipment</h6>
+                <form method="POST" action="{{ url_for('installation.add_job_equipment_line', job_id=job.installation_id) }}" class="row g-2 align-items-end">
+                    <div class="col-md-7">
+                        <label class="form-label mb-1">Item</label>
+                        <select class="form-select form-select-sm" name="item_id" required>
+                            <option value="" disabled selected>Select an item…</option>
+                            {% for i in items %}
+                            <option value="{{ i.item_id }}" {% if i.available_quantity() <= 0 %}disabled{% endif %}>
+                                {{ i.item_name }} ({{ i.category.name }}) — {{ i.available_quantity()|round(2) }} {{ i.unit }} available
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label mb-1">Quantity</label>
+                        <input type="number" step="0.01" min="0.01" class="form-control form-control-sm" name="quantity" required>
+                    </div>
+                    <div class="col-md-2">
+                        <button type="submit" class="btn btn-sm btn-gold w-100">Assign</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-body p-0">
+                <table class="table table-hover mb-0">
+                    <thead class="table-light">
+                        <tr><th>Item</th><th>Quantity</th><th>Assigned By</th><th>Date</th><th>Stock Status</th><th></th></tr>
+                    </thead>
+                    <tbody>
+                        {% for line in job.equipment_lines %}
+                        <tr>
+                            <td>{{ line.item.item_name }}</td>
+                            <td>{{ line.quantity_assigned|round(2) }} {{ line.item.unit }}</td>
+                            <td class="text-muted">{{ line.assigner.full_name if line.assigner else '-' }}</td>
+                            <td class="text-muted">{{ line.assigned_date.strftime('%d %b %Y') }}</td>
+                            <td>
+                                {% if line.deducted and not line.restored %}
+                                <span class="badge bg-success">Deducted from stock</span>
+                                {% elif line.restored %}
+                                <span class="badge bg-info">Restored to stock</span>
+                                {% else %}
+                                <span class="badge" style="background: var(--gold-glow); color: var(--gold-bright);">Reserved</span>
+                                {% endif %}
+                            </td>
+                            <td class="text-end">
+                                <form method="POST" action="{{ url_for('installation.remove_job_equipment_line', job_id=job.installation_id, line_id=line.job_equipment_id) }}"
+                                      onsubmit="return confirm('Remove this equipment line? If already deducted, stock will be restored.');">
+                                    <button type="submit" class="btn btn-sm btn-outline-danger">Remove</button>
+                                </form>
+                            </td>
+                        </tr>
+                        {% else %}
+                        <tr><td colspan="6" class="text-center text-muted py-4">No equipment assigned to this job yet.</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

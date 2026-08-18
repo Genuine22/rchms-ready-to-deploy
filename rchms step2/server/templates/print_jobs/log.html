@@ -1,0 +1,79 @@
+{% extends "base.html" %}
+{% block title %}Log Business Centre Job{% endblock %}
+
+{% block content %}
+<div class="form-shell">
+    <a href="{{ url_for('print_jobs.home') }}" class="text-muted mb-2 d-inline-flex align-items-center gap-1" style="font-size:0.82rem; text-decoration:none;">
+        <i data-lucide="chevron-left" style="width:14px;height:14px;"></i> Business Centre
+    </a>
+    <div class="form-shell-icon" id="jobTypeIcon"><i data-lucide="{{ job_types[selected_type].icon }}"></i></div>
+    <h1 class="page-title" style="font-size: 1.4rem;">Log a Business Centre Job</h1>
+    <p class="page-subtitle mb-4">Printing, photocopying, scanning, lamination, CV &amp; cover letter writing, or document typing.</p>
+
+    <div class="card">
+        <div class="card-body p-4">
+            <form method="POST" action="{{ url_for('print_jobs.log_print_job') }}">
+                <div class="mb-3">
+                    <label class="form-label">Service Type</label>
+                    <select class="form-select" name="job_type" id="jobTypeSelect" required>
+                        {% for key, info in job_types.items() %}
+                        <option value="{{ key }}" data-unit="{{ info.unit }}" data-icon="{{ info.icon }}" {% if key == selected_type %}selected{% endif %}>{{ info.label }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">Customer <span class="text-muted">(optional)</span></label>
+                    <select class="form-select" name="customer_id">
+                        <option value="">Walk-in / not registered</option>
+                        {% for customer in customers %}
+                        <option value="{{ customer.customer_id }}">
+                            {{ customer.full_name }} ({{ customer.membership_code }})
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label" id="pagesLabel">Number of {{ job_types[selected_type].unit }}</label>
+                    <input type="number" min="1" class="form-control" name="pages" id="pagesInput" value="1" required>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">Amount Paid (GHS)</label>
+                    <input type="number" step="0.01" min="0" class="form-control" name="amount" required>
+                </div>
+
+                <div class="d-flex gap-2 mt-4">
+                    <button type="submit" class="btn btn-brand">Log Job</button>
+                    <a href="{{ url_for('print_jobs.list_print_jobs') }}" class="btn btn-outline-secondary">View Recent Jobs</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+// Keep the "Number of ___" label, icon, and any future per-type
+// behaviour in sync with whichever service is currently selected -
+// e.g. "Number of Pages" for printing, "Number of Items" for
+// lamination, "Number of Documents" for CV & cover letter writing.
+(function () {
+    var select = document.getElementById('jobTypeSelect');
+    var pagesLabel = document.getElementById('pagesLabel');
+    var iconWrap = document.getElementById('jobTypeIcon');
+
+    function sync() {
+        var opt = select.options[select.selectedIndex];
+        var unit = opt.getAttribute('data-unit') || 'Pages';
+        var icon = opt.getAttribute('data-icon') || 'file';
+        pagesLabel.textContent = 'Number of ' + unit;
+        iconWrap.innerHTML = '<i data-lucide="' + icon + '"></i>';
+        if (typeof lucide !== 'undefined') { lucide.createIcons(); }
+    }
+
+    select.addEventListener('change', sync);
+    sync();
+})();
+</script>
+{% endblock %}

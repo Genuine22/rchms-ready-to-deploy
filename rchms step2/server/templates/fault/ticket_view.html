@@ -1,0 +1,178 @@
+{% extends "base.html" %}
+{% block title %}{{ ticket.ticket_number }}{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <h1 class="page-title" style="font-size: 1.4rem;">{{ ticket.ticket_number }} — {{ ticket.subject or ticket.category.replace('_',' ')|title }}</h1>
+        <p class="page-subtitle mb-0">
+            {{ ticket.subscriber.full_name }} · {{ ticket.subscriber.phone_number }}
+            {% if ticket.subscriber.location %} · {{ ticket.subscriber.location }}{% endif %}
+        </p>
+    </div>
+    <div class="d-flex gap-2">
+        <span class="badge {{ {'critical':'bg-danger','high':'bg-warning','medium':'bg-info','low':'bg-success'}[ticket.priority] }} align-self-center">{{ ticket.priority|title }}</span>
+        <a href="{{ url_for('fault.list_tickets') }}" class="btn btn-outline-secondary btn-sm">Back to Tickets</a>
+    </div>
+</div>
+
+{% if ticket.is_overdue() %}
+<div class="alert alert-danger mb-3">⚠ This ticket is overdue — expected resolution was {{ ticket.expected_resolution.strftime('%d %b %Y %H:%M') }}.</div>
+{% endif %}
+
+<div class="row g-3">
+    <div class="col-lg-4">
+        <div class="card mb-3">
+            <div class="card-body">
+                <h6 class="mb-3">Ticket Details</h6>
+                <dl class="row mb-0">
+                    <dt class="col-sm-5">Subscriber ID</dt><dd class="col-sm-7">#{{ ticket.subscriber_id }}</dd>
+                    <dt class="col-sm-5">Category</dt><dd class="col-sm-7">{{ ticket.category.replace('_',' ')|title }}</dd>
+                    <dt class="col-sm-5">Created</dt><dd class="col-sm-7">{{ ticket.created_at.strftime('%d %b %Y %H:%M') }}</dd>
+                    <dt class="col-sm-5">Expected Resolution</dt><dd class="col-sm-7">{{ ticket.expected_resolution.strftime('%d %b %Y %H:%M') if ticket.expected_resolution else '-' }}</dd>
+                    <dt class="col-sm-5">Actual Resolution</dt><dd class="col-sm-7">{{ ticket.actual_resolution.strftime('%d %b %Y %H:%M') if ticket.actual_resolution else '-' }}</dd>
+                    <dt class="col-sm-5">GPS Location</dt><dd class="col-sm-7">{{ ticket.gps_location or '-' }}</dd>
+                    <dt class="col-sm-5">Description</dt><dd class="col-sm-7">{{ ticket.description or '-' }}</dd>
+                    <dt class="col-sm-5">Resolution Notes</dt><dd class="col-sm-7">{{ ticket.resolution_notes or '-' }}</dd>
+                </dl>
+            </div>
+        </div>
+
+        <div class="card mb-3">
+            <div class="card-body">
+                <h6 class="mb-3">Technician</h6>
+                <form method="POST" action="{{ url_for('fault.assign_technician', ticket_id=ticket.ticket_id) }}" class="d-flex gap-2">
+                    <select class="form-select form-select-sm" name="assigned_technician_id">
+                        <option value="">Unassigned</option>
+                        {% for member in staff %}
+                        <option value="{{ member.user_id }}" {% if ticket.assigned_technician_id == member.user_id %}selected{% endif %}>{{ member.full_name }}</option>
+                        {% endfor %}
+                    </select>
+                    <button type="submit" class="btn btn-sm btn-outline-primary">Save</button>
+                </form>
+            </div>
+        </div>
+
+        <div class="card mb-3">
+            <div class="card-body">
+                <h6 class="mb-3">Status</h6>
+                <form method="POST" action="{{ url_for('fault.update_status', ticket_id=ticket.ticket_id) }}">
+                    <select class="form-select form-select-sm mb-2" name="status">
+                        {% for s in statuses %}
+                        <option value="{{ s }}" {% if s == ticket.status %}selected{% endif %}>{{ s.replace('_',' ')|title }}</option>
+                        {% endfor %}
+                    </select>
+                    <textarea class="form-control form-control-sm mb-2" name="resolution_notes" rows="2" placeholder="Resolution notes (used when resolving/closing)">{{ ticket.resolution_notes or '' }}</textarea>
+                    <button type="submit" class="btn btn-sm btn-gold w-100">Update Status</button>
+                </form>
+                <p class="text-muted small mt-2 mb-0">
+                    <i data-lucide="info" style="width:12px;height:12px;"></i>
+                    Marking Resolved/Closed automatically deducts any equipment used below from inventory. Cancelling restores it.
+                </p>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-body">
+                <h6 class="mb-3">Equipment Used</h6>
+                <form method="POST" action="{{ url_for('fault.add_ticket_equipment', ticket_id=ticket.ticket_id) }}" class="mb-3">
+                    <select class="form-select form-select-sm mb-2" name="item_id" required>
+                        <option value="" disabled selected>Select item…</option>
+                        {% for i in items %}
+                        <option value="{{ i.item_id }}" {% if i.available_quantity() <= 0 %}disabled{% endif %}>
+                            {{ i.item_name }} — {{ i.available_quantity()|round(2) }} {{ i.unit }} available
+                        </option>
+                        {% endfor %}
+                    </select>
+                    <input type="number" step="0.01" min="0.01" class="form-control form-control-sm mb-2" name="quantity" placeholder="Quantity" required>
+                    <button type="submit" class="btn btn-sm btn-outline-primary w-100">Add</button>
+                </form>
+                {% for line in ticket.equipment_used %}
+                <div class="d-flex justify-content-between align-items-center border-bottom py-1">
+                    <div>
+                        <div>{{ line.item.item_name }} — {{ line.quantity_used|round(2) }} {{ line.item.unit }}</div>
+                        <div class="text-muted small">
+                            {% if line.deducted and not line.restored %}Deducted{% elif line.restored %}Restored{% else %}Reserved{% endif %}
+                        </div>
+                    </div>
+                    <form method="POST" action="{{ url_for('fault.remove_ticket_equipment', ticket_id=ticket.ticket_id, line_id=line.ticket_equipment_id) }}">
+                        <button type="submit" class="btn btn-sm btn-outline-danger">Remove</button>
+                    </form>
+                </div>
+                {% else %}
+                <p class="text-muted small mb-0">No parts used yet.</p>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-8">
+        <div class="card mb-3">
+            <div class="card-body">
+                <h6 class="mb-3">Add Work Note</h6>
+                <form method="POST" action="{{ url_for('fault.add_note', ticket_id=ticket.ticket_id) }}" class="d-flex gap-2">
+                    <input type="text" class="form-control form-control-sm" name="note" placeholder="What did you do / observe?" required>
+                    <button type="submit" class="btn btn-sm btn-outline-primary">Add</button>
+                </form>
+            </div>
+        </div>
+
+        <div class="card mb-3">
+            <div class="card-body">
+                <h6 class="mb-3">Photos &amp; Signature</h6>
+                <form method="POST" action="{{ url_for('fault.upload_attachment', ticket_id=ticket.ticket_id) }}" enctype="multipart/form-data" class="row g-2 align-items-end mb-3">
+                    <div class="col-md-5">
+                        <input type="file" class="form-control form-control-sm" name="photo" accept="image/*" required>
+                    </div>
+                    <div class="col-md-4">
+                        <select class="form-select form-select-sm" name="attachment_type">
+                            <option value="photo_before">Before</option>
+                            <option value="photo_after">After</option>
+                            <option value="photo_general" selected>General</option>
+                            <option value="signature">Customer Signature</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <button type="submit" class="btn btn-sm btn-gold w-100">Upload</button>
+                    </div>
+                </form>
+                {% if ticket.attachments %}
+                <div class="d-flex flex-wrap gap-2">
+                    {% for a in ticket.attachments %}
+                    <a href="{{ url_for('static', filename=a.file_path) }}" target="_blank" class="text-center">
+                        <img src="{{ url_for('static', filename=a.file_path) }}" style="width:90px;height:90px;object-fit:cover;border-radius:8px;border:1px solid var(--border-2);">
+                        <div class="text-muted small">{{ a.attachment_type.replace('_',' ')|title }}</div>
+                    </a>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <p class="text-muted small mb-0">No photos uploaded yet.</p>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-body">
+                <h6 class="mb-3"><i data-lucide="history" style="width:16px;height:16px;"></i> Activity Timeline</h6>
+                {% set icons = {
+                    'created': 'plus-circle', 'assigned': 'user-check', 'status_changed': 'refresh-cw',
+                    'work_note': 'sticky-note', 'attachment_uploaded': 'image', 'equipment_used': 'package',
+                    'equipment_removed': 'package-minus'
+                } %}
+                {% if ticket.activity %}
+                {% for entry in ticket.activity|reverse %}
+                <div class="d-flex align-items-center gap-2 mb-2">
+                    <i data-lucide="{{ icons.get(entry.event_type, 'activity') }}" style="width:15px;height:15px;color: var(--gold-bright);"></i>
+                    <span>{{ entry.description }}</span>
+                    {% if entry.user %}<span class="text-muted small">— {{ entry.user.full_name }}</span>{% endif %}
+                    <span class="text-muted ms-auto" style="font-size: 0.75rem;">{{ entry.created_at.strftime('%d %b, %I:%M %p') }}</span>
+                </div>
+                {% endfor %}
+                {% else %}
+                <p class="text-muted mb-0">No activity recorded yet.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

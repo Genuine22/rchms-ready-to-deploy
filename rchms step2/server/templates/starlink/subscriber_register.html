@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% block title %}Register Starlink Subscriber{% endblock %}
+
+{% block content %}
+<div class="form-shell">
+    <div class="form-shell-icon gold"><i data-lucide="satellite-dish"></i></div>
+    <h1 class="page-title" style="font-size: 1.4rem;">Register Starlink Subscriber</h1>
+    <p class="page-subtitle mb-4">Separate from cafe customer registration.</p>
+
+    <div class="card">
+        <div class="card-body p-4">
+            <form method="POST" action="{{ url_for('starlink.register_subscriber') }}">
+                <div class="mb-3">
+                    <label class="form-label">Full Name</label>
+                    <input type="text" class="form-control" name="full_name" required autofocus>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Phone Number</label>
+                    <input type="text" class="form-control" name="phone_number" placeholder="e.g. 0241234567" required>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Location / Community <span class="text-muted">(optional)</span></label>
+                    <input type="text" class="form-control" name="location" placeholder="e.g. Akropong">
+                </div>
+                <div class="d-flex gap-2 mt-4">
+                    <button type="submit" class="btn btn-gold">Register Subscriber</button>
+                    <a href="{{ url_for('starlink.list_subscribers') }}" class="btn btn-outline-secondary">Cancel</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

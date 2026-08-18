@@ -1,0 +1,65 @@
+{% extends "base.html" %}
+{% block title %}Installation Reports{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <h1 class="page-title">Installation Reports</h1>
+        <p class="page-subtitle">Daily and monthly installation counts, technician performance, and estimated revenue — all downloadable as PDF.</p>
+    </div>
+    <a href="{{ url_for('installation.home') }}" class="btn btn-outline-secondary btn-sm">Back to Installation</a>
+</div>
+
+<div class="row g-3">
+    <div class="col-md-6">
+        <a href="{{ url_for('installation.daily_installations_report') }}" class="service-card" style="text-decoration:none; cursor:pointer;">
+            <div class="service-card-icon" style="background: var(--gold-glow); color: var(--gold-bright);">
+                <i data-lucide="calendar"></i>
+            </div>
+            <div class="service-card-body">
+                <h6 class="service-card-title">Daily Installations</h6>
+                <p class="service-card-desc">Every installation job scheduled for a chosen day.</p>
+            </div>
+        </a>
+    </div>
+    <div class="col-md-6">
+        <a href="{{ url_for('installation.monthly_installations_report') }}" class="service-card" style="text-decoration:none; cursor:pointer;">
+            <div class="service-card-icon" style="background: var(--gold-glow); color: var(--gold-bright);">
+                <i data-lucide="calendar-range"></i>
+            </div>
+            <div class="service-card-body">
+                <h6 class="service-card-title">Monthly Installations</h6>
+                <p class="service-card-desc">A full month's installations with a status breakdown.</p>
+            </div>
+        </a>
+    </div>
+    <div class="col-md-6">
+        <a href="{{ url_for('installation.technician_performance_report') }}" class="service-card" style="text-decoration:none; cursor:pointer;">
+            <div class="service-card-icon" style="background: var(--gold-glow); color: var(--gold-bright);">
+                <i data-lucide="user-check"></i>
+            </div>
+            <div class="service-card-body">
+                <h6 class="service-card-title">Technician Performance</h6>
+                <p class="service-card-desc">Jobs assigned, completed and cancelled per technician.</p>
+            </div>
+        </a>
+    </div>
+    <div class="col-md-6">
+        <a href="{{ url_for('installation.revenue_report') }}" class="service-card" style="text-decoration:none; cursor:pointer;">
+            <div class="service-card-icon" style="background: var(--gold-glow); color: var(--gold-bright);">
+                <i data-lucide="banknote"></i>
+            </div>
+            <div class="service-card-body">
+                <h6 class="service-card-title">Revenue Report</h6>
+                <p class="service-card-desc">Estimated, based on site survey cost estimates — see note on the report.</p>
+            </div>
+        </a>
+    </div>
+</div>
+
+<p class="text-muted mt-3">
+    <i data-lucide="info" style="width:16px;height:16px;"></i>
+    Single-record PDFs (one site survey, one installation report) are downloaded from that record's own page —
+    look for the "Download PDF" button there.
+</p>
+{% endblock %}

@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+{% block title %}Inventory Reports{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <h1 class="page-title">Inventory Reports</h1>
+        <p class="page-subtitle">Stock, valuation and movement reports — downloadable as PDF, Excel or CSV.</p>
+    </div>
+    <a href="{{ url_for('inventory.home') }}" class="btn btn-outline-secondary btn-sm">Back to Inventory</a>
+</div>
+
+<div class="row g-3">
+    {% set icons = {
+        'stock': 'boxes', 'valuation': 'banknote', 'issued': 'log-out', 'returned': 'log-in',
+        'damaged': 'triangle-alert', 'monthly-usage': 'calendar-range', 'most-used': 'trending-up',
+        'least-used': 'trending-down', 'movement': 'history'
+    } %}
+    {% for key, label in reports.items() %}
+    <div class="col-md-4 col-sm-6">
+        <a href="{{ url_for('inventory.report_view', report_key=key) }}" class="service-card" style="text-decoration:none; cursor:pointer;">
+            <div class="service-card-icon" style="background: var(--gold-glow); color: var(--gold-bright);">
+                <i data-lucide="{{ icons.get(key, 'file-text') }}"></i>
+            </div>
+            <div class="service-card-body">
+                <h6 class="service-card-title">{{ label }}</h6>
+            </div>
+        </a>
+    </div>
+    {% endfor %}
+</div>
+{% endblock %}

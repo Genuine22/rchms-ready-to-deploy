@@ -1,0 +1,123 @@
+{% extends "base.html" %}
+{% block title %}Inventory{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <h1 class="page-title"><i data-lucide="package" style="width:22px;height:22px;vertical-align:-3px;"></i> Inventory</h1>
+        <p class="page-subtitle">Warehouse stock for every Starlink kit, network component and mounting accessory — deducted automatically as installations complete.</p>
+    </div>
+    <div class="d-flex gap-2">
+        <a href="{{ url_for('inventory.new_item') }}" class="btn btn-gold btn-sm"><i data-lucide="plus"></i> Add Item</a>
+        <a href="{{ url_for('inventory.list_categories') }}" class="btn btn-outline-secondary btn-sm">Categories</a>
+        <a href="{{ url_for('inventory.reports_home') }}" class="btn btn-outline-secondary btn-sm">Reports</a>
+    </div>
+</div>
+
+<div class="row mb-3 g-3">
+    <div class="col-md-3 col-sm-6">
+        <a href="{{ url_for('inventory.list_items') }}" class="stat-card">
+            <div class="stat-label">Total Items</div>
+            <div class="stat-value">{{ total_items }}</div>
+        </a>
+    </div>
+    <div class="col-md-3 col-sm-6">
+        <a href="{{ url_for('inventory.list_items', status='available') }}" class="stat-card">
+            <div class="stat-label">Available</div>
+            <div class="stat-value" style="color: var(--emerald);">{{ by_status.available }}</div>
+        </a>
+    </div>
+    <div class="col-md-3 col-sm-6">
+        <a href="{{ url_for('inventory.list_items', status='assigned') }}" class="stat-card">
+            <div class="stat-label">Assigned</div>
+            <div class="stat-value">{{ by_status.assigned }}</div>
+        </a>
+    </div>
+    <div class="col-md-3 col-sm-6">
+        <a href="{{ url_for('inventory.list_items', status='installed') }}" class="stat-card">
+            <div class="stat-label">Installed</div>
+            <div class="stat-value">{{ by_status.installed }}</div>
+        </a>
+    </div>
+    <div class="col-md-3 col-sm-6">
+        <a href="{{ url_for('inventory.list_items', status='damaged') }}" class="stat-card">
+            <div class="stat-label">Damaged</div>
+            <div class="stat-value" style="color: var(--danger);">{{ by_status.damaged }}</div>
+        </a>
+    </div>
+    <div class="col-md-3 col-sm-6">
+        <a href="{{ url_for('inventory.list_items', stock='out') }}" class="stat-card">
+            <div class="stat-label">Out of Stock</div>
+            <div class="stat-value" style="color: var(--danger);">{{ out_of_stock|length }}</div>
+        </a>
+    </div>
+    <div class="col-md-3 col-sm-6">
+        <a href="{{ url_for('inventory.list_items', stock='low') }}" class="stat-card">
+            <div class="stat-label">Low Stock Alerts</div>
+            <div class="stat-value" style="color: var(--warning);">{{ low_stock|length }}</div>
+        </a>
+    </div>
+    <div class="col-md-3 col-sm-6">
+        <a href="{{ url_for('inventory.list_items', status='returned') }}" class="stat-card">
+            <div class="stat-label">Returned</div>
+            <div class="stat-value">{{ by_status.returned }}</div>
+        </a>
+    </div>
+</div>
+
+<div class="row g-3">
+    <div class="col-lg-6">
+        <div class="card h-100">
+            <div class="card-body">
+                <h6 class="mb-3"><i data-lucide="alert-triangle" style="width:16px;height:16px;color:var(--warning);"></i> Low Stock &amp; Out of Stock</h6>
+                {% if low_stock or out_of_stock %}
+                <div class="d-flex flex-column gap-2">
+                    {% for item in out_of_stock %}
+                    <a href="{{ url_for('inventory.view_item', item_id=item.item_id) }}" class="alert alert-danger d-flex justify-content-between align-items-center mb-0 py-2">
+                        <span>⚠ {{ item.item_name }} — Out of Stock</span>
+                        <span class="badge bg-danger">0 {{ item.unit }}</span>
+                    </a>
+                    {% endfor %}
+                    {% for item in low_stock %}
+                    <a href="{{ url_for('inventory.view_item', item_id=item.item_id) }}" class="alert alert-warning d-flex justify-content-between align-items-center mb-0 py-2">
+                        <span>⚠ Only {{ item.quantity_in_stock|round(1) }} {{ item.unit }} of {{ item.item_name }} remaining</span>
+                        <span class="badge bg-warning">Min {{ item.minimum_stock_level|round(1) }}</span>
+                    </a>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <p class="text-muted mb-0">Everything is comfortably stocked right now.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-6">
+        <div class="card h-100">
+            <div class="card-body">
+                <h6 class="mb-3"><i data-lucide="activity" style="width:16px;height:16px;"></i> Recent Inventory Activity</h6>
+                {% if recent_activity %}
+                <div class="d-flex flex-column gap-2">
+                    {% for t in recent_activity %}
+                    <div class="d-flex justify-content-between border-bottom pb-2">
+                        <div>
+                            <div>{{ t.item.item_name }}</div>
+                            <div class="text-muted small">{{ t.transaction_type.replace('_',' ')|title }}
+                                {% if t.installation_id %} · Job #{{ t.installation_id }}{% endif %}
+                                {% if t.ticket_id %} · Ticket #{{ t.ticket_id }}{% endif %}
+                            </div>
+                        </div>
+                        <div class="text-end">
+                            <div>{{ t.quantity|round(2) }} {{ t.item.unit }}</div>
+                            <div class="text-muted small">{{ t.created_at.strftime('%d %b, %H:%M') }}</div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <p class="text-muted mb-0">No inventory movements recorded yet.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

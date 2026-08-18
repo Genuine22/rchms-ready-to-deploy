@@ -1,0 +1,409 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}RCHMS{% endblock %} — RuralConnect Hub</title>
+    <script>
+        // Applied BEFORE stylesheets load, so the page never flashes the
+        // wrong theme for a split second on load/navigation. Reads the
+        // saved preference (light/dark/auto) - "auto" follows whatever
+        // the OS/browser is currently set to.
+        (function() {
+            try {
+                var pref = localStorage.getItem('rchms-theme') || 'light';
+                var resolved = pref;
+                if (pref === 'auto') {
+                    resolved = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+                }
+                // Set explicit theme so both light and dark CSS rules fire.
+                document.documentElement.setAttribute('data-theme', resolved);
+                document.documentElement.setAttribute('data-theme-pref', pref);
+            } catch (e) { /* localStorage unavailable - just default to light */ }
+        })();
+    </script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/5.3.3/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+</head>
+<body>
+
+{% if current_user.is_authenticated %}
+<div class="app-shell">
+
+    <button class="sidebar-toggle" onclick="document.getElementById('rchmsSidebar').classList.toggle('open'); document.getElementById('rchmsOverlay').classList.toggle('show');" aria-label="Toggle menu"><i data-lucide="menu"></i></button>
+    <div class="sidebar-overlay" id="rchmsOverlay" onclick="document.getElementById('rchmsSidebar').classList.remove('open'); this.classList.remove('show');"></div>
+
+    <aside class="sidebar" id="rchmsSidebar">
+        <div class="sidebar-brand">
+            <div class="signal-rings" aria-hidden="true"><span></span><span></span><span></span></div>
+            {% include "_signal_mark.html" %}
+            <div class="sidebar-brand-text">
+                RuralConnect
+                <small>Digital Hub</small>
+            </div>
+        </div>
+
+        <nav class="sidebar-nav">
+            <div class="sidebar-section-label">Overview</div>
+            <a href="{{ url_for('dashboard.home') }}" class="sidebar-link {% if request.endpoint == 'dashboard.home' %}active{% endif %}">
+                <i data-lucide="layout-dashboard" class="icon"></i> Dashboard
+            </a>
+
+            <div class="sidebar-section-label">Cyber Café</div>
+            <a href="{{ url_for('customers.list_customers') }}" class="sidebar-link {% if request.blueprint == 'customers' %}active{% endif %}">
+                <i data-lucide="users" class="icon"></i> Customers
+            </a>
+            <a href="{{ url_for('computers.list_computers') }}" class="sidebar-link {% if request.blueprint == 'computers' %}active{% endif %}">
+                <i data-lucide="monitor" class="icon"></i> Computers
+            </a>
+            <a href="{{ url_for('sessions.list_sessions') }}" class="sidebar-link {% if request.blueprint == 'sessions' and request.endpoint != 'sessions.gaming_dashboard' %}active{% endif %}">
+                <i data-lucide="timer" class="icon"></i> Sessions
+            </a>
+            <a href="{{ url_for('sessions.gaming_dashboard') }}" class="sidebar-link {% if request.endpoint == 'sessions.gaming_dashboard' %}active{% endif %}">
+                <i data-lucide="gamepad-2" class="icon"></i> Gaming
+            </a>
+            <a href="{{ url_for('payments.list_payments') }}" class="sidebar-link {% if request.blueprint == 'payments' %}active{% endif %}">
+                <i data-lucide="banknote" class="icon"></i> Payments
+            </a>
+            <a href="#bizCentreMenu" class="sidebar-link sidebar-link-toggle {% if request.blueprint == 'print_jobs' %}active{% endif %}"
+               data-bs-toggle="collapse" role="button" aria-expanded="{{ 'true' if request.blueprint == 'print_jobs' else 'false' }}" aria-controls="bizCentreMenu">
+                <i data-lucide="printer" class="icon"></i> Business Centre
+                <i data-lucide="chevron-down" class="icon sidebar-link-chevron"></i>
+            </a>
+            <div class="collapse sidebar-submenu {% if request.blueprint == 'print_jobs' %}show{% endif %}" id="bizCentreMenu">
+                <a href="{{ url_for('print_jobs.home') }}" class="sidebar-sublink {% if request.endpoint == 'print_jobs.home' %}active{% endif %}">Overview</a>
+                {% for key, info in [
+                    ('printing', {'label': 'Printing', 'icon': 'printer'}),
+                    ('photocopying', {'label': 'Photocopying', 'icon': 'copy'}),
+                    ('scanning', {'label': 'Scanning', 'icon': 'scan-line'}),
+                    ('lamination', {'label': 'Lamination', 'icon': 'layers'}),
+                    ('cv_writing', {'label': 'CV & Cover Letter Writing', 'icon': 'file-text'}),
+                    ('document_typing', {'label': 'Document Typing', 'icon': 'keyboard'})
+                ] %}
+                <a href="{{ url_for('print_jobs.log_print_job', type=key) }}" class="sidebar-sublink {% if request.endpoint == 'print_jobs.log_print_job' and request.args.get('type') == key %}active{% endif %}">{{ info.label }}</a>
+                {% endfor %}
+                <a href="{{ url_for('print_jobs.list_print_jobs') }}" class="sidebar-sublink {% if request.endpoint == 'print_jobs.list_print_jobs' %}active{% endif %}">All Jobs</a>
+            </div>
+            <a href="{{ url_for('reports.reports_home') }}" class="sidebar-link {% if request.blueprint == 'reports' %}active{% endif %}">
+                <i data-lucide="bar-chart-3" class="icon"></i> Reports
+            </a>
+
+            <div class="sidebar-section-label">Starlink</div>
+            <a href="{{ url_for('starlink.home') }}" class="sidebar-link {% if request.blueprint == 'starlink' %}active{% endif %}">
+                <i data-lucide="satellite-dish" class="icon"></i> Starlink Membership
+            </a>
+            <a href="#starlinkInstallMenu" class="sidebar-link sidebar-link-toggle {% if request.blueprint == 'installation' %}active{% endif %}"
+               data-bs-toggle="collapse" role="button" aria-expanded="{{ 'true' if request.blueprint == 'installation' else 'false' }}" aria-controls="starlinkInstallMenu">
+                <i data-lucide="satellite" class="icon"></i> Starlink Installation
+                <i data-lucide="chevron-down" class="icon sidebar-link-chevron"></i>
+            </a>
+            <div class="collapse sidebar-submenu {% if request.blueprint == 'installation' %}show{% endif %}" id="starlinkInstallMenu">
+                <a href="{{ url_for('installation.home') }}" class="sidebar-sublink {% if request.endpoint == 'installation.home' %}active{% endif %}">Overview</a>
+                <a href="{{ url_for('starlink.list_subscribers') }}" class="sidebar-sublink {% if request.endpoint in ['starlink.list_subscribers', 'starlink.view_subscriber'] %}active{% endif %}">Members</a>
+                <a href="{{ url_for('installation.list_surveys') }}" class="sidebar-sublink {% if request.endpoint in ['installation.list_surveys', 'installation.view_survey'] %}active{% endif %}">Site Surveys</a>
+                <a href="{{ url_for('installation.list_jobs') }}" class="sidebar-sublink {% if request.endpoint in ['installation.list_jobs', 'installation.view_job'] %}active{% endif %}">Installation Jobs</a>
+                <a href="{{ url_for('inventory.home') }}" class="sidebar-sublink {% if request.blueprint == 'inventory' %}active{% endif %}">Inventory</a>
+                <a href="{{ url_for('fault.home') }}" class="sidebar-sublink {% if request.blueprint == 'fault' %}active{% endif %}">Fault Management</a>
+                <a href="{{ url_for('installation.schedule') }}" class="sidebar-sublink {% if request.endpoint == 'installation.schedule' %}active{% endif %}">Schedule</a>
+                <a href="{{ url_for('installation.reports_home') }}" class="sidebar-sublink {% if request.endpoint and request.endpoint.startswith('installation.') and ('report' in request.endpoint) %}active{% endif %}">Reports</a>
+            </div>
+        </nav>
+    </aside>
+
+    <main class="main-content">
+        <div class="topbar">
+            <div class="topbar-clock">
+                <i data-lucide="calendar"></i>
+                <span id="topbar-datetime">Loading...</span>
+            </div>
+            <a href="/services" class="topbar-services-btn">
+                <i data-lucide="layout-grid" style="width:15px;height:15px;"></i> Services
+            </a>
+            <div class="topbar-right">
+                <div class="theme-toggle" id="themeToggle" role="group" aria-label="Theme">
+                    <button type="button" data-theme-choice="light" aria-label="Light mode" title="Light">
+                        <i data-lucide="sun"></i>
+                    </button>
+                    <button type="button" data-theme-choice="dark" aria-label="Dark mode" title="Dark">
+                        <i data-lucide="moon"></i>
+                    </button>
+                    <button type="button" data-theme-choice="auto" aria-label="Match system" title="Auto">
+                        <i data-lucide="monitor"></i>
+                    </button>
+                </div>
+
+                <div class="notif-bell-wrap">
+                    <button type="button" class="notif-bell" id="notifBellBtn" aria-label="Notifications">
+                        <i data-lucide="bell"></i>
+                        <span class="notif-badge" id="notifBadge">0</span>
+                    </button>
+                    <div class="notif-dropdown" id="notifDropdown">
+                        <div class="notif-dropdown-header">Notifications</div>
+                        <div id="notifList">
+                            <div class="notif-empty">Loading...</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="topbar-user-wrap">
+                    <button type="button" class="topbar-role-pill topbar-role-btn" id="userMenuBtn">
+                        {% if current_user.role == 'admin' %}Administrator{% else %}{{ current_user.role|title }}{% endif %}
+                        <i data-lucide="chevron-down" style="width:14px;height:14px;"></i>
+                    </button>
+                    <div class="topbar-user-dropdown" id="userMenuDropdown">
+                        <a href="{{ url_for('auth.change_password') }}">
+                            <i data-lucide="key-round"></i> Change password
+                        </a>
+                        <a href="{{ url_for('auth.logout') }}" class="danger">
+                            <i data-lucide="log-out"></i> Log out
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="page-content">
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                        <div class="alert alert-{{ 'danger' if category == 'error' else 'success' }} alert-dismissible fade show{% if category != 'error' %} alert-autohide{% endif %}" role="alert" {% if category != 'error' %}data-autohide="30000"{% endif %}>
+                            {{ message }}
+                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                        </div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+
+            {% block content %}{% endblock %}
+        </div>
+
+        <footer class="app-footer">
+            <div>&copy; {{ current_year }} RuralConnect Ghana. All rights reserved.</div>
+            <div class="app-footer-links">
+                <span>RCHMS v1.0</span>
+                <a href="{{ url_for('starlink.voucher_lookup') }}" target="_blank">Voucher Lookup</a>
+                <a href="mailto:support@ruralconnect.gh">Support</a>
+            </div>
+        </footer>
+    </main>
+</div>
+{% else %}
+    <main class="main-content no-sidebar">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ 'danger' if category == 'error' else 'success' }} alert-dismissible fade show" role="alert">
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+        {{ self.content() }}
+    </main>
+{% endif %}
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/5.3.3/js/bootstrap.bundle.min.js"></script>
+<script>
+    if (typeof lucide !== 'undefined') { lucide.createIcons(); }
+
+    // --- Auto-dismiss non-error alerts (e.g. welcome flash after login) ---
+    document.querySelectorAll('.alert-autohide').forEach(function(alertEl) {
+        var delay = parseInt(alertEl.getAttribute('data-autohide') || '30000', 10);
+        setTimeout(function() {
+            // Fade out smoothly using Bootstrap's dismiss
+            var bsAlert = bootstrap.Alert.getOrCreateInstance(alertEl);
+            if (bsAlert) {
+                alertEl.classList.remove('show');
+                alertEl.addEventListener('transitionend', function() { alertEl.remove(); }, { once: true });
+            }
+        }, delay);
+    });
+
+    // --- Theme toggle (Light / Dark / Auto) ---
+    const themeToggle = document.getElementById('themeToggle');
+    if (themeToggle) {
+        const themeButtons = themeToggle.querySelectorAll('button');
+        const systemDarkQuery = window.matchMedia('(prefers-color-scheme: dark)');
+
+        function applyTheme(pref) {
+            let resolved = pref;
+            if (pref === 'auto') {
+                resolved = systemDarkQuery.matches ? 'dark' : 'light';
+            }
+            // Always set an explicit data-theme so CSS selectors
+            // for both light and dark work reliably.
+            document.documentElement.setAttribute('data-theme', resolved);
+            document.documentElement.setAttribute('data-theme-pref', pref);
+        }
+
+        function setActiveButton(pref) {
+            themeButtons.forEach(function(btn) {
+                btn.classList.toggle('active', btn.getAttribute('data-theme-choice') === pref);
+            });
+        }
+
+        function setTheme(pref) {
+            try { localStorage.setItem('rchms-theme', pref); } catch (e) { /* ignore */ }
+            // Brief transition so the switch feels deliberate rather than
+            // an instant jarring flip, then remove the class so normal
+            // hover/animation transitions aren't slowed down afterward.
+            document.documentElement.classList.add('theme-transitioning');
+            applyTheme(pref);
+            setActiveButton(pref);
+            setTimeout(function() {
+                document.documentElement.classList.remove('theme-transitioning');
+            }, 300);
+        }
+
+        themeButtons.forEach(function(btn) {
+            btn.addEventListener('click', function() {
+                setTheme(btn.getAttribute('data-theme-choice'));
+            });
+        });
+
+        // Reflect whatever was already applied by the early <head> script
+        // (no transition needed here - that already happened pre-render).
+        const currentPref = document.documentElement.getAttribute('data-theme-pref') || 'auto';
+        setActiveButton(currentPref);
+
+        // If the admin's OS switches between light/dark while "Auto" is
+        // selected, follow along live without needing a page reload.
+        systemDarkQuery.addEventListener('change', function() {
+            const pref = document.documentElement.getAttribute('data-theme-pref') || 'auto';
+            if (pref === 'auto') applyTheme('auto');
+        });
+    }
+
+    // Header user menu: toggle open on click, close when clicking outside.
+    const userMenuBtn = document.getElementById('userMenuBtn');
+    const userMenuDropdown = document.getElementById('userMenuDropdown');
+    if (userMenuBtn && userMenuDropdown) {
+        userMenuBtn.addEventListener('click', function(e) {
+            e.stopPropagation();
+            userMenuDropdown.classList.toggle('show');
+        });
+        document.addEventListener('click', function(e) {
+            if (!userMenuDropdown.contains(e.target) && !userMenuBtn.contains(e.target)) {
+                userMenuDropdown.classList.remove('show');
+            }
+        });
+    }
+
+    // --- Topbar live clock ---
+    const datetimeEl = document.getElementById('topbar-datetime');
+    if (datetimeEl) {
+        function updateClock() {
+            const now = new Date();
+            const options = { weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' };
+            datetimeEl.textContent = now.toLocaleDateString('en-GB', options);
+        }
+        updateClock();
+        setInterval(updateClock, 30000);
+    }
+
+    // --- Notification bell ---
+    const notifBellBtn = document.getElementById('notifBellBtn');
+    if (notifBellBtn) {
+        const notifDropdown = document.getElementById('notifDropdown');
+        const notifBadge = document.getElementById('notifBadge');
+        const notifList = document.getElementById('notifList');
+
+        const iconColorClass = { danger: 'danger', warning: 'warning' };
+
+        const BADGE_LIFETIME_MS = 2 * 60 * 1000;
+        const LIST_LIFETIME_MS = 5 * 60 * 1000;
+        const firstSeenAt = {}; // id -> timestamp (ms)
+        let lastFetchedItems = [];
+
+        function renderFromCache() {
+            const now = Date.now();
+
+            const forBadge = lastFetchedItems.filter(function(item) {
+                return (now - firstSeenAt[item.id]) < BADGE_LIFETIME_MS;
+            });
+            const forList = lastFetchedItems.filter(function(item) {
+                return (now - firstSeenAt[item.id]) < LIST_LIFETIME_MS;
+            });
+
+            if (forBadge.length > 0) {
+                notifBadge.textContent = forBadge.length > 9 ? '9+' : forBadge.length;
+                notifBadge.classList.add('show');
+            } else {
+                notifBadge.classList.remove('show');
+            }
+
+            if (forList.length === 0) {
+                notifList.innerHTML = '<div class="notif-empty">You\'re all caught up. 🎉</div>';
+                return;
+            }
+
+            notifList.innerHTML = forList.map(function(item) {
+                const colorClass = iconColorClass[item.color] || 'warning';
+                return `<a href="${item.url}" class="notif-item">
+                    <div class="notif-item-icon ${colorClass}"><i data-lucide="${item.icon}" style="width:16px;height:16px;"></i></div>
+                    <div>
+                        <div class="notif-item-title">${item.title}</div>
+                        <div class="notif-item-detail">${item.detail}</div>
+                    </div>
+                </a>`;
+            }).join('');
+
+            if (typeof lucide !== 'undefined') { lucide.createIcons(); }
+        }
+
+        function refreshNotifications() {
+            fetch('{{ url_for("notifications.feed") }}')
+                .then(r => r.json())
+                .then(data => {
+                    const now = Date.now();
+                    const liveIds = new Set();
+
+                    data.items.forEach(function(item) {
+                        liveIds.add(item.id);
+                        if (!(item.id in firstSeenAt)) {
+                            firstSeenAt[item.id] = now;
+                        }
+                    });
+
+                    // Forget timestamps for alerts that are no longer
+                    // being reported at all (issue resolved) - so if the
+                    // exact same id ever reappears later, it's treated
+                    // as new again rather than inheriting an old timer.
+                    Object.keys(firstSeenAt).forEach(function(id) {
+                        if (!liveIds.has(id)) delete firstSeenAt[id];
+                    });
+
+                    lastFetchedItems = data.items;
+                    renderFromCache();
+                })
+                .catch(() => { /* silently retry next cycle */ });
+        }
+
+        notifBellBtn.addEventListener('click', function(e) {
+            e.stopPropagation();
+            // Re-render immediately on open so the badge and list
+            // reflect the exact age of each item right now, not the
+            // last timer tick.
+            renderFromCache();
+            notifDropdown.classList.toggle('show');
+        });
+
+        document.addEventListener('click', function(e) {
+            if (!notifDropdown.contains(e.target) && !notifBellBtn.contains(e.target)) {
+                notifDropdown.classList.remove('show');
+            }
+        });
+
+        refreshNotifications();
+        // Poll the server every 20s for what's currently live.
+        setInterval(refreshNotifications, 20000);
+        // Re-render every second so the badge disappears within 1s of
+        // its 2-minute mark and the list item within 1s of its 5-minute
+        // mark, rather than waiting up to 15s for the old slow tick.
+        setInterval(renderFromCache, 1000);
+    }
+</script>
+</body>
+</html>

@@ -1,0 +1,71 @@
+{% extends "base.html" %}
+{% block title %}Record Payment{% endblock %}
+
+{% block content %}
+<div class="form-shell">
+    <div class="form-shell-icon"><i data-lucide="banknote"></i></div>
+    <h1 class="page-title" style="font-size: 1.4rem;">Record Payment</h1>
+    {% if session %}
+        <p class="page-subtitle mb-4">
+            For session: {{ session.customer.full_name }} on {{ session.computer.name }}
+            ({{ session.service.service_name if session.service else "Deleted package" }})
+        </p>
+    {% else %}
+        <p class="page-subtitle mb-4">Use this for standalone payments like printing or photocopying.</p>
+    {% endif %}
+
+    <div class="card">
+        <div class="card-body p-4">
+            {% if session %}
+                <form method="POST" action="{{ url_for('payments.record_for_session', session_id=session.session_id) }}">
+            {% else %}
+                <form method="POST" action="{{ url_for('payments.record_payment') }}">
+            {% endif %}
+
+                {% if not session %}
+                <div class="mb-3">
+                    <label class="form-label">Customer</label>
+                    <select class="form-select" name="customer_id" required>
+                        <option value="" disabled selected>Select a customer...</option>
+                        {% for customer in customers %}
+                        <option value="{{ customer.customer_id }}">
+                            {{ customer.full_name }} ({{ customer.membership_code }})
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                {% endif %}
+
+                <div class="mb-3">
+                    <label class="form-label">Amount (GHS)</label>
+                    <input type="number" step="0.01" min="0.01" class="form-control" name="amount"
+                           value="{{ suggested_amount if suggested_amount else '' }}" required>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">Payment Method</label>
+                    <select class="form-select" name="payment_method" required>
+                        <option value="cash">Cash</option>
+                        <option value="mobile_money">Mobile Money</option>
+                        <option value="membership">Membership Account</option>
+                    </select>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">Receipt Number <span class="text-muted">(optional - auto-generated if left blank)</span></label>
+                    <input type="text" class="form-control" name="receipt_number" placeholder="e.g. RCT-000123">
+                </div>
+
+                <div class="d-flex gap-2 mt-4">
+                    <button type="submit" class="btn btn-brand">Record Payment</button>
+                    {% if session %}
+                        <a href="{{ url_for('sessions.view_session', session_id=session.session_id) }}" class="btn btn-outline-secondary">Cancel</a>
+                    {% else %}
+                        <a href="{{ url_for('payments.list_payments') }}" class="btn btn-outline-secondary">Cancel</a>
+                    {% endif %}
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

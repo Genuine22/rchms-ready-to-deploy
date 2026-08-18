@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% block title %}Renew Subscription{% endblock %}
+
+{% block content %}
+<div class="form-shell">
+    <div class="form-shell-icon gold"><i data-lucide="refresh-cw"></i></div>
+    <h1 class="page-title" style="font-size: 1.4rem;">Renew Subscription</h1>
+    <p class="page-subtitle mb-4">
+        {{ subscription.subscriber.full_name }} &middot; {{ subscription.subscriber.phone_number }}<br>
+        Current voucher <code>{{ subscription.voucher_code }}</code> ends {{ subscription.ends_at.strftime('%d %b %Y') }}
+    </p>
+
+    <div class="card">
+        <div class="card-body p-4">
+            <form method="POST" action="{{ url_for('starlink.renew_subscription', subscription_id=subscription.subscription_id) }}">
+                <div class="mb-3">
+                    <label class="form-label">Choose a Plan</label>
+                    <select class="form-select" name="plan_id" required>
+                        <option value="" disabled selected>Select a plan...</option>
+                        {% for plan in plans %}
+                        <option value="{{ plan.plan_id }}" {% if plan.plan_id == subscription.plan_id %}selected{% endif %}>
+                            {{ plan.plan_name }} ({{ plan.duration_days }} days, {{ plan.data_allocation_gb }}GB) - GHS {{ "%.2f"|format(plan.price) }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                    <div class="form-text">A new voucher code will be generated for this renewal.</div>
+                </div>
+
+                <div class="d-flex gap-2 mt-4">
+                    <button type="submit" class="btn btn-gold">Create Renewal</button>
+                    <a href="{{ url_for('starlink.view_subscription', subscription_id=subscription.subscription_id) }}" class="btn btn-outline-secondary">Cancel</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

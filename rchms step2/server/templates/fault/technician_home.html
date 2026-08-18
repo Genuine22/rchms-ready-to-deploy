@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+{% block title %}My Tickets{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <h1 class="page-title">My Assigned Tickets</h1>
+        <p class="page-subtitle">Everything currently assigned to you, {{ current_user.full_name }}.</p>
+    </div>
+    <a href="{{ url_for('fault.home') }}" class="btn btn-outline-secondary btn-sm">Back to Helpdesk</a>
+</div>
+
+{% if todays_jobs %}
+<div class="card mb-3">
+    <div class="card-body">
+        <h6 class="mb-3"><i data-lucide="calendar-check" style="width:16px;height:16px;"></i> Today's Jobs</h6>
+        <div class="d-flex flex-column gap-2">
+            {% for t in todays_jobs %}
+            <a href="{{ url_for('fault.view_ticket', ticket_id=t.ticket_id) }}" class="d-flex justify-content-between border-bottom pb-2" style="text-decoration:none; color:inherit;">
+                <span>{{ t.ticket_number }} — {{ t.subscriber.full_name }}</span>
+                <span class="badge {{ {'critical':'bg-danger','high':'bg-warning','medium':'bg-info','low':'bg-success'}[t.priority] }}">{{ t.priority|title }}</span>
+            </a>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<div class="card">
+    <div class="card-body p-0">
+        <table class="table table-hover mb-0">
+            <thead class="table-light">
+                <tr><th>Ticket</th><th>Customer</th><th>Category</th><th>Priority</th><th>Status</th><th>Expected By</th><th></th></tr>
+            </thead>
+            <tbody>
+                {% for t in my_tickets %}
+                <tr>
+                    <td>{{ t.ticket_number }}</td>
+                    <td>
+                        <div>{{ t.subscriber.full_name }}</div>
+                        <div class="text-muted small">{{ t.subscriber.phone_number }}</div>
+                    </td>
+                    <td class="text-muted">{{ t.category.replace('_',' ')|title }}</td>
+                    <td><span class="badge {{ {'critical':'bg-danger','high':'bg-warning','medium':'bg-info','low':'bg-success'}[t.priority] }}">{{ t.priority|title }}</span></td>
+                    <td><span class="badge" style="background: var(--gold-glow); color: var(--gold-bright);">{{ t.status.replace('_',' ')|title }}</span></td>
+                    <td class="text-muted">{{ t.expected_resolution.strftime('%d %b, %H:%M') if t.expected_resolution else '-' }}</td>
+                    <td class="text-end">
+                        <a href="{{ url_for('fault.view_ticket', ticket_id=t.ticket_id) }}" class="btn btn-sm btn-outline-primary">Open</a>
+                    </td>
+                </tr>
+                {% else %}
+                <tr><td colspan="7" class="text-center text-muted py-4">Nothing assigned to you right now.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

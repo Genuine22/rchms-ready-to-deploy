@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+{% block title %}Customer List Report{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <h1 class="page-title"><i data-lucide="users" style="width:22px;height:22px;vertical-align:-3px;"></i> Customer List Report</h1>
+        <p class="page-subtitle">{{ customers|length }} total customers.</p>
+    </div>
+    <a href="{{ url_for('reports.reports_home') }}" class="btn btn-outline-secondary btn-sm">Back to Reports</a>
+</div>
+
+<div class="card">
+    <div class="card-body p-0">
+        <table class="table table-hover mb-0">
+            <thead class="table-light">
+                <tr>
+                    <th>Customer</th>
+                    <th>Membership ID</th>
+                    <th>Phone Number</th>
+                    <th>Date Registered</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for customer in customers %}
+                <tr>
+                    <td>
+                        <div class="d-flex align-items-center gap-2">
+                            <span class="avatar-initial" style="background: hsl({{ (customer.customer_id * 47) % 360 }}, 45%, 42%);">
+                                {{ customer.full_name[0]|upper }}
+                            </span>
+                            <span>{{ customer.full_name }}</span>
+                        </div>
+                    </td>
+                    <td><code>{{ customer.membership_code }}</code></td>
+                    <td>{{ customer.phone_number }}</td>
+                    <td class="text-muted">{{ customer.date_registered.strftime('%d %b %Y') }}</td>
+                    <td>
+                        {% if customer.is_active %}
+                            <span class="badge" style="background: color-mix(in srgb, var(--color-success) 14%, var(--color-surface)); color: var(--color-success);">Active</span>
+                        {% else %}
+                            <span class="badge" style="background: color-mix(in srgb, var(--color-ink-muted) 12%, var(--color-surface)); color: var(--color-ink-muted);">Inactive</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% else %}
+                <tr><td colspan="5" class="text-center text-muted py-4">No customers registered yet.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

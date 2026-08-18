@@ -1,0 +1,70 @@
+{% extends "base.html" %}
+{% block title %}Site Survey — {{ survey.subscriber.full_name }}{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="page-header">
+            <div>
+                <h1 class="page-title" style="font-size: 1.4rem;">Site Survey</h1>
+                <p class="page-subtitle mb-0">{{ survey.subscriber.full_name }} &middot; {{ survey.subscriber.phone_number }}</p>
+            </div>
+            <div class="d-flex gap-2">
+                <a href="{{ url_for('installation.survey_pdf', survey_id=survey.survey_id) }}" class="btn btn-gold btn-sm">
+                    <i data-lucide="download"></i> Download PDF
+                </a>
+                <a href="{{ url_for('starlink.view_subscriber', subscriber_id=survey.subscriber_id) }}" class="btn btn-outline-secondary btn-sm">
+                    <i data-lucide="arrow-left"></i> Back to Member
+                </a>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-body p-4">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    {% if survey.status == 'completed' %}
+                        <span class="badge" style="background: color-mix(in srgb, var(--color-success) 14%, var(--color-surface)); color: var(--color-success);">Completed</span>
+                    {% elif survey.status == 'cancelled' %}
+                        <span class="badge" style="background: rgba(26,26,26,0.08); color: var(--color-ink);">Cancelled</span>
+                    {% else %}
+                        <span class="badge" style="background: color-mix(in srgb, var(--color-gold) 18%, var(--color-surface)); color: var(--color-gold-dark);">Pending</span>
+                    {% endif %}
+                    <span class="text-muted">Surveyed {{ survey.survey_date.strftime('%d %b %Y') }}</span>
+                </div>
+
+                <dl class="row mb-0">
+                    <dt class="col-sm-4">Surveyor</dt>
+                    <dd class="col-sm-8">{{ survey.surveyor.full_name if survey.surveyor else 'Not assigned' }}</dd>
+
+                    <dt class="col-sm-4">GPS Location</dt>
+                    <dd class="col-sm-8">{{ survey.gps_location or '-' }}</dd>
+
+                    <dt class="col-sm-4">Roof Type</dt>
+                    <dd class="col-sm-8">{{ survey.roof_type or '-' }}</dd>
+
+                    <dt class="col-sm-4">Mount Type</dt>
+                    <dd class="col-sm-8">{{ survey.mount_type or '-' }}</dd>
+
+                    <dt class="col-sm-4">Obstruction Level</dt>
+                    <dd class="col-sm-8">{{ survey.obstruction_level|title }}</dd>
+
+                    <dt class="col-sm-4">Estimated Cable Length</dt>
+                    <dd class="col-sm-8">{{ survey.estimated_cable_length ~ ' m' if survey.estimated_cable_length is not none else '-' }}</dd>
+
+                    <dt class="col-sm-4">Estimated Cost</dt>
+                    <dd class="col-sm-8">{{ 'GHS %.2f'|format(survey.estimated_cost) if survey.estimated_cost is not none else '-' }}</dd>
+
+                    <dt class="col-sm-4">Remarks</dt>
+                    <dd class="col-sm-8">{{ survey.remarks or '-' }}</dd>
+                </dl>
+
+                <div class="mt-4">
+                    <a href="{{ url_for('installation.subscriber_job', subscriber_id=survey.subscriber_id) }}" class="btn btn-brand btn-sm">
+                        <i data-lucide="hard-hat"></i> Installation Job
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

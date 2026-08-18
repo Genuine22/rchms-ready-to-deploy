@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% block title %}Business Centre{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <h1 class="page-title">Business Centre</h1>
+        <p class="page-subtitle">Printing, photocopying, scanning, lamination, CV &amp; cover letter writing, and document typing — all in one place.</p>
+    </div>
+    <a href="{{ url_for('print_jobs.list_print_jobs') }}" class="btn btn-outline-secondary"><i data-lucide="list"></i> View All Jobs</a>
+</div>
+
+<div class="row g-3">
+    {% for key, info in job_types.items() %}
+    <div class="col-md-4 col-sm-6">
+        <a href="{{ url_for('print_jobs.log_print_job', type=key) }}" class="service-card" style="text-decoration:none; cursor:pointer;">
+            <div class="service-card-icon" style="background: var(--gold-glow); color: var(--gold-bright);">
+                <i data-lucide="{{ info.icon }}"></i>
+            </div>
+            <div class="service-card-body">
+                <h6 class="service-card-title">{{ info.label }}</h6>
+                <p class="service-card-desc">Log a new job and see it counted in {{ info.unit|lower }} on today's reports.</p>
+            </div>
+        </a>
+    </div>
+    {% endfor %}
+</div>
+{% endblock %}

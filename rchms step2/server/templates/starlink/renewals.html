@@ -1,0 +1,91 @@
+{% extends "base.html" %}
+{% block title %}Renewals{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1 class="page-title"><i data-lucide="bell-ring" style="width:22px;height:22px;vertical-align:-3px;"></i> Renewals</h1>
+    <a href="{{ url_for('starlink.home') }}" class="btn btn-outline-secondary btn-sm">Back to Starlink Home</a>
+</div>
+
+<form method="GET" class="mb-3 d-flex gap-2 align-items-center">
+    <label class="form-label mb-0">Show subscriptions expiring within</label>
+    <select name="days" class="form-select" style="max-width: 150px;" onchange="this.form.submit()">
+        <option value="1" {% if within_days == 1 %}selected{% endif %}>1 day</option>
+        <option value="3" {% if within_days == 3 %}selected{% endif %}>3 days</option>
+        <option value="7" {% if within_days == 7 %}selected{% endif %}>7 days</option>
+        <option value="14" {% if within_days == 14 %}selected{% endif %}>14 days</option>
+    </select>
+</form>
+
+<h6 class="section-label">Expiring Soon</h6>
+<div class="card mb-4">
+    <div class="card-body p-0">
+        <table class="table table-hover mb-0">
+            <thead class="table-light">
+                <tr>
+                    <th>Subscriber</th>
+                    <th>Phone</th>
+                    <th>Plan</th>
+                    <th>Ends</th>
+                    <th>Days Left</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for sub in expiring %}
+                <tr>
+                    <td>{{ sub.subscriber.full_name }}</td>
+                    <td>{{ sub.subscriber.phone_number }}</td>
+                    <td>{{ sub.plan.plan_name if sub.plan else "Deleted plan" }}</td>
+                    <td>{{ sub.ends_at.strftime('%d %b %Y') }}</td>
+                    <td>
+                        <span class="badge {% if sub.days_remaining() == 0 %}badge-danger{% else %}badge-warning{% endif %}">
+                            {{ sub.days_remaining() }} day{{ 's' if sub.days_remaining() != 1 else '' }}
+                        </span>
+                    </td>
+                    <td class="text-end">
+                        <a href="{{ url_for('starlink.renew_subscription', subscription_id=sub.subscription_id) }}"
+                           class="btn btn-sm btn-outline-primary">Renew</a>
+                    </td>
+                </tr>
+                {% else %}
+                <tr><td colspan="6" class="text-center text-muted py-3">Nothing expiring in this window.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<h6 class="section-label">Recently Expired</h6>
+<div class="card">
+    <div class="card-body p-0">
+        <table class="table mb-0">
+            <thead class="table-light">
+                <tr>
+                    <th>Subscriber</th>
+                    <th>Phone</th>
+                    <th>Plan</th>
+                    <th>Ended</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for sub in already_expired %}
+                <tr>
+                    <td>{{ sub.subscriber.full_name }}</td>
+                    <td>{{ sub.subscriber.phone_number }}</td>
+                    <td>{{ sub.plan.plan_name if sub.plan else "Deleted plan" }}</td>
+                    <td>{{ sub.ends_at.strftime('%d %b %Y') }}</td>
+                    <td class="text-end">
+                        <a href="{{ url_for('starlink.renew_subscription', subscription_id=sub.subscription_id) }}"
+                           class="btn btn-sm btn-outline-primary">Renew</a>
+                    </td>
+                </tr>
+                {% else %}
+                <tr><td colspan="5" class="text-center text-muted py-3">No recently expired subscriptions.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+{% block title %}Installation Report — {{ job.subscriber.full_name }}{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="page-header">
+            <div>
+                <h1 class="page-title" style="font-size: 1.4rem;">Installation Report</h1>
+                <p class="page-subtitle mb-0">{{ job.subscriber.full_name }}'s installation job</p>
+            </div>
+            <div class="d-flex gap-2">
+                <a href="{{ url_for('installation.installation_report_pdf', job_id=job.installation_id) }}" class="btn btn-gold btn-sm">
+                    <i data-lucide="download"></i> Download PDF
+                </a>
+                <a href="{{ url_for('installation.view_job', job_id=job.installation_id) }}" class="btn btn-outline-secondary btn-sm">
+                    <i data-lucide="arrow-left"></i> Back to Job
+                </a>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-body p-4">
+                <div class="row text-center mb-4">
+                    <div class="col-4">
+                        <div class="text-muted small">Download</div>
+                        <div class="fs-4">{{ report.download_speed ~ ' Mbps' if report.download_speed is not none else '-' }}</div>
+                    </div>
+                    <div class="col-4">
+                        <div class="text-muted small">Upload</div>
+                        <div class="fs-4">{{ report.upload_speed ~ ' Mbps' if report.upload_speed is not none else '-' }}</div>
+                    </div>
+                    <div class="col-4">
+                        <div class="text-muted small">Latency</div>
+                        <div class="fs-4">{{ report.latency ~ ' ms' if report.latency is not none else '-' }}</div>
+                    </div>
+                </div>
+
+                <dl class="row mb-0">
+                    <dt class="col-sm-4">Customer Name</dt>
+                    <dd class="col-sm-8">{{ report.customer_name or '-' }}</dd>
+
+                    <dt class="col-sm-4">Completion Date</dt>
+                    <dd class="col-sm-8">{{ report.completion_date.strftime('%d %b %Y') if report.completion_date else '-' }}</dd>
+
+                    <dt class="col-sm-4">Installer Notes</dt>
+                    <dd class="col-sm-8">{{ report.installer_notes or '-' }}</dd>
+                </dl>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

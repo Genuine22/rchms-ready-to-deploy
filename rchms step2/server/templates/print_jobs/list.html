@@ -1,0 +1,68 @@
+{% extends "base.html" %}
+{% block title %}Business Centre Jobs{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <h1 class="page-title">Business Centre Jobs</h1>
+        <p class="page-subtitle">
+            {% if today_only %}
+                {{ jobs|length }} job{{ 's' if jobs|length != 1 else '' }} logged today.
+            {% else %}
+                Printing, photocopying, scanning, lamination, CV &amp; cover letter writing, document typing.
+            {% endif %}
+        </p>
+    </div>
+    <a href="{{ url_for('print_jobs.log_print_job', type=selected_type) }}" class="btn btn-brand">+ Log Job</a>
+</div>
+
+{% if today_only %}
+<div class="alert alert-info d-flex justify-content-between align-items-center mb-3">
+    <span>Showing only today's jobs.</span>
+    <a href="{{ url_for('print_jobs.list_print_jobs', type=selected_type) }}" class="btn btn-sm btn-outline-secondary">View All Time</a>
+</div>
+{% endif %}
+
+<div class="d-flex gap-2 flex-wrap mb-3">
+    <a href="{{ url_for('print_jobs.list_print_jobs', today=('1' if today_only else None)) }}" class="btn btn-sm {{ 'btn-brand' if not selected_type else 'btn-outline-secondary' }}">All</a>
+    {% for key, info in job_types.items() %}
+    <a href="{{ url_for('print_jobs.list_print_jobs', type=key, today=('1' if today_only else None)) }}" class="btn btn-sm {{ 'btn-brand' if selected_type == key else 'btn-outline-secondary' }}">
+        <i data-lucide="{{ info.icon }}" style="width:14px;height:14px;"></i> {{ info.label }}
+    </a>
+    {% endfor %}
+</div>
+
+<div class="card">
+    <div class="card-body p-0">
+        <table class="table table-hover mb-0">
+            <thead class="table-light">
+                <tr>
+                    <th>Type</th>
+                    <th>Customer</th>
+                    <th>Qty</th>
+                    <th>Amount Paid</th>
+                    <th>Date</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for job in jobs %}
+                <tr>
+                    <td>
+                        <i data-lucide="{{ job.type_icon }}" style="width:16px;height:16px;"></i>
+                        {{ job.type_label }}
+                    </td>
+                    <td>{{ job.customer.full_name if job.customer else 'Walk-in' }}</td>
+                    <td>{{ job.pages }} <span class="text-muted" style="font-size:0.75rem;">{{ job.type_unit }}</span></td>
+                    <td><strong>GHS {{ "%.2f"|format(job.amount) }}</strong></td>
+                    <td class="text-muted">{{ job.created_at.strftime('%d %b, %I:%M %p') }}</td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="5" class="text-center text-muted py-4">No jobs logged yet{% if selected_type %} for this service{% endif %}.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

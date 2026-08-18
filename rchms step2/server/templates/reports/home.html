@@ -1,0 +1,82 @@
+{% extends "base.html" %}
+{% block title %}Reports{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <h1 class="page-title">Reports</h1>
+        <p class="page-subtitle">Daily revenue, customers, and usage statistics.</p>
+    </div>
+</div>
+
+<form method="GET" id="dateRangeForm" class="card p-3 mb-4">
+    <div class="row align-items-end g-2">
+        <div class="col-auto">
+            <label class="form-label mb-0">From</label>
+            <input type="date" class="form-control" name="from" value="{{ from_date }}">
+        </div>
+        <div class="col-auto">
+            <label class="form-label mb-0">To</label>
+            <input type="date" class="form-control" name="to" value="{{ to_date }}">
+        </div>
+        <div class="col-auto text-muted small">
+            Applies to Daily Revenue and Usage reports below.
+        </div>
+    </div>
+</form>
+
+<div class="row g-3">
+    <div class="col-md-4">
+        <div class="card h-100">
+            <div class="card-body p-4">
+                <div class="form-shell-icon mb-3"><i data-lucide="trending-up"></i></div>
+                <h5 class="mb-1">Daily Revenue</h5>
+                <p class="text-muted mb-3" style="font-size: 0.85rem;">Revenue broken down by day for the selected range.</p>
+                <a id="link-revenue" href="{{ url_for('reports.daily_revenue', **{'from': from_date, 'to': to_date}) }}"
+                   class="btn btn-sm btn-brand">View Report</a>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card h-100">
+            <div class="card-body p-4">
+                <div class="form-shell-icon mb-3"><i data-lucide="users"></i></div>
+                <h5 class="mb-1">Customer List</h5>
+                <p class="text-muted mb-3" style="font-size: 0.85rem;">All registered customers and their status.</p>
+                <a href="{{ url_for('reports.customer_list_report') }}"
+                   class="btn btn-sm btn-brand">View Report</a>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card h-100">
+            <div class="card-body p-4">
+                <div class="form-shell-icon mb-3"><i data-lucide="monitor"></i></div>
+                <h5 class="mb-1">Usage Stats</h5>
+                <p class="text-muted mb-3" style="font-size: 0.85rem;">Most-used computer, most popular package, total sessions.</p>
+                <a id="link-usage" href="{{ url_for('reports.usage_report', **{'from': from_date, 'to': to_date}) }}"
+                   class="btn btn-sm btn-brand">View Report</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Keep the date-dependent report links in sync with the picker without
+// needing a page reload - update their href whenever the dates change.
+const form = document.getElementById('dateRangeForm');
+const fromInput = form.querySelector('input[name="from"]');
+const toInput = form.querySelector('input[name="to"]');
+const revenueLink = document.getElementById('link-revenue');
+const usageLink = document.getElementById('link-usage');
+
+function updateLinks() {
+    const params = `?from=${fromInput.value}&to=${toInput.value}`;
+    revenueLink.href = "{{ url_for('reports.daily_revenue') }}" + params;
+    usageLink.href = "{{ url_for('reports.usage_report') }}" + params;
+}
+fromInput.addEventListener('change', updateLinks);
+toInput.addEventListener('change', updateLinks);
+form.addEventListener('submit', function(e) { e.preventDefault(); updateLinks(); });
+</script>
+{% endblock %}

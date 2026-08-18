@@ -1,0 +1,147 @@
+{% extends "base.html" %}
+{% block title %}Starlink Plans{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <h1 class="page-title"><i data-lucide="package" style="width:22px;height:22px;vertical-align:-3px;"></i> Starlink Plans</h1>
+        <p class="page-subtitle">Weekly, monthly, and occasion-based packages.</p>
+    </div>
+    <a href="{{ url_for('starlink.add_plan') }}" class="btn btn-gold">+ Add Plan</a>
+</div>
+
+<div class="row g-3">
+    {% for plan in plans %}
+    <div class="col-md-4">
+        <div class="card h-100" style="border-top: 4px solid {{ 'var(--color-gold)' if plan.is_active else 'var(--color-border)' }};position: relative;">
+            <div class="card-body p-4">
+                <div class="d-flex justify-content-between align-items-start mb-2">
+                    <span class="badge text-capitalize" style="background: color-mix(in srgb, var(--color-forest) 10%, var(--color-surface)); color: var(--color-forest);">{{ plan.plan_type }}</span>
+                    {% if plan.is_active %}
+                        <span class="badge" style="background: color-mix(in srgb, var(--color-success) 14%, var(--color-surface)); color: var(--color-success);">Active</span>
+                    {% else %}
+                        <span class="badge" style="background: color-mix(in srgb, var(--color-ink-muted) 12%, var(--color-surface)); color: var(--color-ink-muted);">Inactive</span>
+                    {% endif %}
+                </div>
+
+                <h5 class="mb-1">{{ plan.plan_name }}</h5>
+                <p class="text-muted mb-3" style="font-size: 0.85rem;">{{ plan.duration_days }} days &middot; {{ plan.data_allocation_gb }} GB</p>
+
+                <div class="d-flex align-items-baseline gap-1 mb-3">
+                    <span class="display-font" style="font-size: 1.8rem; font-weight: 700; color: var(--color-forest);">GHS {{ "%.0f"|format(plan.price) }}</span>
+                    <span class="text-muted" style="font-size: 0.8rem;">/ cycle</span>
+                </div>
+
+                <form method="POST" action="{{ url_for('starlink.toggle_plan_active', plan_id=plan.plan_id) }}"
+                      class="d-flex justify-content-between align-items-center mb-3"
+                      onsubmit="return true;">
+                    <label class="text-muted" style="font-size: 0.85rem;">{{ 'Active' if plan.is_active else 'Inactive' }}</label>
+                    <label class="ios-switch">
+                        <input type="checkbox" {% if plan.is_active %}checked{% endif %}
+                               onchange="this.form.submit()">
+                        <span class="track"></span>
+                    </label>
+                </form>
+
+                <div class="d-flex gap-2">
+                    <button class="btn btn-sm btn-outline-primary flex-grow-1" data-bs-toggle="modal" data-bs-target="#editPlanModal"
+                            onclick="loadEditPlan({{ plan.plan_id }}, '{{ plan.plan_name }}', '{{ plan.plan_type }}', {{ plan.duration_days }}, {{ plan.data_allocation_gb }}, {{ plan.price }})">
+                        Edit
+                    </button>
+                    {% set uses = usage_counts.get(plan.plan_id, 0) %}
+                    {% set active_uses = active_usage_counts.get(plan.plan_id, 0) %}
+                    {% if active_uses %}
+                    <button type="button" class="btn btn-sm btn-outline-secondary" disabled
+                            title="{{ active_uses }} active/pending subscription(s) right now - deactivate instead, or wait until they end.">
+                        Delete
+                    </button>
+                    {% else %}
+                    <form method="POST" action="{{ url_for('starlink.delete_plan', plan_id=plan.plan_id) }}" style="display: inline;"
+                          onsubmit="return confirm('Delete this plan? This cannot be undone.{% if uses %} {{ uses }} past subscription(s) will keep their record but no longer show this plan name.{% endif %}');">
+                        <button type="submit" class="btn btn-sm btn-outline-danger">Delete</button>
+                    </form>
+                    {% endif %}
+                </div>
+                {% if active_uses %}
+                <p class="text-muted mt-2 mb-0" style="font-size: 0.75rem;">
+                    <i data-lucide="info" style="width:12px;height:12px;vertical-align:-1px;"></i>
+                    Currently in use by {{ active_uses }} active/pending subscription{{ 's' if active_uses != 1 else '' }} - can't be deleted yet.
+                </p>
+                {% elif uses %}
+                <p class="text-muted mt-2 mb-0" style="font-size: 0.75rem;">
+                    <i data-lucide="info" style="width:12px;height:12px;vertical-align:-1px;"></i>
+                    {{ uses }} past subscription{{ 's' if uses != 1 else '' }} on record - deletable; those subscriptions will just show "Deleted plan".
+                </p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    {% else %}
+    <p class="text-muted">No plans added yet.</p>
+    {% endfor %}
+</div>
+
+<!-- Edit Plan Modal -->
+<div class="modal fade" id="editPlanModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Edit Starlink Plan</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="POST" action="{{ url_for('starlink.edit_plan', plan_id=0) }}" id="editPlanForm">
+                <div class="modal-body">
+                    <input type="hidden" id="editPlanId" name="plan_id">
+                    
+                    <div class="mb-3">
+                        <label for="editPlanName" class="form-label">Plan Name</label>
+                        <input type="text" class="form-control" id="editPlanName" name="plan_name" placeholder="e.g., Gold Monthly" required>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="editPlanType" class="form-label">Plan Type</label>
+                        <select class="form-select" id="editPlanType" name="plan_type" required>
+                            <option value="">-- Select Type --</option>
+                            <option value="weekly">Weekly</option>
+                            <option value="monthly">Monthly</option>
+                            <option value="occasion">Occasion</option>
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="editDurationDays" class="form-label">Duration (Days)</label>
+                        <input type="number" class="form-control" id="editDurationDays" name="duration_days" required min="1">
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="editDataAllocation" class="form-label">Data Allocation (GB)</label>
+                        <input type="number" class="form-control" id="editDataAllocation" name="data_allocation_gb" required min="0" step="0.01">
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="editPlanPrice" class="form-label">Price (GHS)</label>
+                        <input type="number" class="form-control" id="editPlanPrice" name="price" required min="0" step="0.01">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-gold">Update Plan</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+function loadEditPlan(planId, planName, planType, durationDays, dataAllocationGb, price) {
+    document.getElementById('editPlanId').value = planId;
+    document.getElementById('editPlanName').value = planName;
+    document.getElementById('editPlanType').value = planType;
+    document.getElementById('editDurationDays').value = durationDays;
+    document.getElementById('editDataAllocation').value = dataAllocationGb;
+    document.getElementById('editPlanPrice').value = price;
+    const form = document.getElementById('editPlanForm');
+    form.action = form.action.replace(/\/\d+\/edit$/, '/' + planId + '/edit');
+}
+</script>
+{% endblock %}

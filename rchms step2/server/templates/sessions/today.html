@@ -1,0 +1,68 @@
+{% extends "base.html" %}
+{% block title %}Today's Sessions{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <h1 class="page-title">Today's Sessions</h1>
+        <p class="page-subtitle">{{ sessions|length }} session{{ 's' if sessions|length != 1 else '' }} on {{ today.strftime('%d %b %Y') }} - all statuses.</p>
+    </div>
+    <a href="{{ url_for('sessions.list_sessions') }}" class="btn btn-outline-secondary">View Active Only</a>
+</div>
+
+<div class="card">
+    <div class="card-body p-0">
+        <table class="table table-hover mb-0">
+            <thead class="table-light">
+                <tr>
+                    <th>Computer</th>
+                    <th>Customer</th>
+                    <th>Package</th>
+                    <th>Started</th>
+                    <th>Ended</th>
+                    <th>Status</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for session in sessions %}
+                <tr>
+                    <td><strong>{{ session.computer.name }}</strong></td>
+                    <td>{{ session.customer.full_name }}</td>
+                    <td>{{ session.service.service_name if session.service else "Deleted package" }}</td>
+                    <td class="text-muted">{{ session.started_at.strftime('%I:%M %p') }}</td>
+                    <td class="text-muted">
+                        {% if session.actual_end_at %}
+                            {{ session.actual_end_at.strftime('%I:%M %p') }}
+                        {% elif session.status == 'active' %}
+                            &mdash;
+                        {% else %}
+                            {{ session.ends_at.strftime('%I:%M %p') }}
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if session.status == 'active' %}
+                            <span class="badge" style="background: color-mix(in srgb, var(--color-danger) 14%, var(--color-surface)); color: var(--color-danger);">Active</span>
+                        {% elif session.status == 'completed' %}
+                            <span class="badge" style="background: color-mix(in srgb, var(--color-success) 14%, var(--color-surface)); color: var(--color-success);">Completed</span>
+                        {% elif session.status == 'expired' %}
+                            <span class="badge" style="background: color-mix(in srgb, var(--color-ink-muted) 12%, var(--color-surface)); color: var(--color-ink-muted);">Expired</span>
+                        {% else %}
+                            <span class="badge" style="background: color-mix(in srgb, var(--color-ink-muted) 12%, var(--color-surface)); color: var(--color-ink-muted);">Cancelled</span>
+                        {% endif %}
+                    </td>
+                    <td class="text-end">
+                        <a href="{{ url_for('sessions.view_session', session_id=session.session_id) }}"
+                           class="btn btn-sm btn-outline-primary">View</a>
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="7" class="text-center text-muted py-4">No sessions have started today yet.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+{% block title %}Inventory Categories{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <h1 class="page-title">Inventory Categories</h1>
+        <p class="page-subtitle">{{ categories|length }} categories. Admins can add more here — nothing needs a code change.</p>
+    </div>
+    <a href="{{ url_for('inventory.home') }}" class="btn btn-outline-secondary btn-sm">Back to Inventory</a>
+</div>
+
+<div class="row g-3">
+    <div class="col-lg-4">
+        <div class="card">
+            <div class="card-body">
+                <h6 class="mb-3">Add Category</h6>
+                <form method="POST" action="{{ url_for('inventory.list_categories') }}">
+                    <div class="mb-2">
+                        <input type="text" class="form-control form-control-sm" name="name" placeholder="e.g. Battery Backup Unit" required>
+                    </div>
+                    <button type="submit" class="btn btn-sm btn-gold w-100">Add Category</button>
+                </form>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-8">
+        <div class="card">
+            <div class="card-body p-0">
+                <table class="table table-hover mb-0">
+                    <thead class="table-light">
+                        <tr><th>Category</th><th>Items</th><th>Status</th><th></th></tr>
+                    </thead>
+                    <tbody>
+                        {% for c in categories %}
+                        <tr>
+                            <td>{{ c.name }}</td>
+                            <td class="text-muted">{{ item_counts.get(c.category_id, 0) }}</td>
+                            <td>
+                                {% if c.is_active %}
+                                <span class="badge bg-success">Active</span>
+                                {% else %}
+                                <span class="badge bg-danger">Disabled</span>
+                                {% endif %}
+                            </td>
+                            <td class="text-end">
+                                <form method="POST" action="{{ url_for('inventory.toggle_category', category_id=c.category_id) }}">
+                                    <button type="submit" class="btn btn-sm btn-outline-secondary">
+                                        {{ 'Disable' if c.is_active else 'Enable' }}
+                                    </button>
+                                </form>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

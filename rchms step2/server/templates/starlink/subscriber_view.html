@@ -1,0 +1,152 @@
+{% extends "base.html" %}
+{% block title %}{{ subscriber.full_name }}{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-start mb-3">
+    <div>
+        <h4 class="mb-0">{{ subscriber.full_name }}</h4>
+        <p class="text-muted mb-0">
+            {{ subscriber.phone_number }}
+            {% if subscriber.location %} &middot; {{ subscriber.location }}{% endif %}
+        </p>
+    </div>
+    <div>
+        <a href="{{ url_for('starlink.new_subscription', subscriber_id=subscriber.subscriber_id) }}"
+           class="btn btn-sm btn-brand">+ New Subscription</a>
+        <a href="{{ url_for('starlink.list_subscribers') }}" class="btn btn-outline-secondary btn-sm">Back</a>
+    </div>
+</div>
+
+<p class="text-muted">Registered on {{ subscriber.date_registered.strftime('%d %b %Y') }}</p>
+
+<h6 class="mt-4">Starlink Installation</h6>
+<div class="d-flex gap-2 flex-wrap mb-4">
+    <a href="{{ url_for('installation.subscriber_survey', subscriber_id=subscriber.subscriber_id) }}" class="btn btn-outline-primary btn-sm">
+        <i data-lucide="map-pin"></i> Site Survey
+    </a>
+    <a href="{{ url_for('installation.subscriber_job', subscriber_id=subscriber.subscriber_id) }}" class="btn btn-outline-primary btn-sm">
+        <i data-lucide="hard-hat"></i> Installation Job
+    </a>
+    <a href="{{ url_for('installation.subscriber_equipment', subscriber_id=subscriber.subscriber_id) }}" class="btn btn-outline-primary btn-sm">
+        <i data-lucide="package"></i> Assign Equipment
+    </a>
+    <a href="{{ url_for('installation.subscriber_report', subscriber_id=subscriber.subscriber_id) }}" class="btn btn-outline-primary btn-sm">
+        <i data-lucide="file-text"></i> Installation Report
+    </a>
+    <a href="{{ url_for('installation.section_placeholder', section='maintenance') }}" class="btn btn-outline-secondary btn-sm">
+        <i data-lucide="wrench"></i> Maintenance
+    </a>
+</div>
+
+<h6 class="mt-4">Subscription History</h6>
+<div class="card">
+    <div class="card-body p-0">
+        <table class="table mb-0">
+            <thead class="table-light">
+                <tr>
+                    <th>Voucher</th>
+                    <th>Plan</th>
+                    <th>Starts</th>
+                    <th>Ends</th>
+                    <th>Status</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for sub in subscriptions %}
+                <tr>
+                    <td><code>{{ sub.voucher_code }}</code></td>
+                    <td>{{ sub.plan.plan_name }}</td>
+                    <td>{{ sub.starts_at.strftime('%d %b %Y') }}</td>
+                    <td>{{ sub.ends_at.strftime('%d %b %Y') }}</td>
+                    <td>
+                        {% if sub.status == 'active' %}
+                            <span class="badge" style="background: color-mix(in srgb, var(--color-success) 14%, var(--color-surface)); color: var(--color-success);">Active</span>
+                        {% elif sub.status == 'pending_payment' %}
+                            <span class="badge" style="background: color-mix(in srgb, var(--color-gold) 18%, var(--color-surface)); color: var(--color-gold-dark);">Awaiting Payment</span>
+                        {% elif sub.status == 'expired' %}
+                            <span class="badge" style="background: color-mix(in srgb, var(--color-ink-muted) 12%, var(--color-surface)); color: var(--color-ink-muted);">Expired</span>
+                        {% else %}
+                            <span class="badge" style="background: rgba(26,26,26,0.08); color: var(--color-ink);">Cancelled</span>
+                        {% endif %}
+                    </td>
+                    <td class="text-end">
+                        <a href="{{ url_for('starlink.view_subscription', subscription_id=sub.subscription_id) }}"
+                           class="btn btn-sm btn-outline-primary">View</a>
+                    </td>
+                </tr>
+                {% else %}
+                <tr><td colspan="6" class="text-center text-muted py-3">No subscriptions yet.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<h6 class="mt-4">Fault History</h6>
+{% if fault_tickets %}
+<div class="card mb-3">
+    <div class="card-body p-0">
+        <table class="table table-hover mb-0">
+            <thead class="table-light">
+                <tr><th>Ticket</th><th>Category</th><th>Priority</th><th>Status</th><th>Created</th><th></th></tr>
+            </thead>
+            <tbody>
+                {% for t in fault_tickets %}
+                <tr>
+                    <td>{{ t.ticket_number }}</td>
+                    <td class="text-muted">{{ t.category.replace('_',' ')|title }}</td>
+                    <td><span class="badge {{ {'critical':'bg-danger','high':'bg-warning','medium':'bg-info','low':'bg-success'}[t.priority] }}">{{ t.priority|title }}</span></td>
+                    <td><span class="badge" style="background: var(--gold-glow); color: var(--gold-bright);">{{ t.status.replace('_',' ')|title }}</span></td>
+                    <td class="text-muted">{{ t.created_at.strftime('%d %b %Y') }}</td>
+                    <td class="text-end">
+                        <a href="{{ url_for('fault.view_ticket', ticket_id=t.ticket_id) }}" class="btn btn-sm btn-outline-primary">View</a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% else %}
+<p class="text-muted">No fault tickets on record.</p>
+{% endif %}
+<div class="mb-3">
+    <a href="{{ url_for('fault.new_ticket', subscriber_id=subscriber.subscriber_id) }}" class="btn btn-sm btn-outline-primary">
+        <i data-lucide="plus"></i> Report a Fault
+    </a>
+</div>
+
+<h6 class="mt-4">Installation Timeline</h6>
+{% if timeline %}
+<div class="card">
+    <div class="card-body p-4">
+        {% set icons = {
+            'survey_created': 'map-pin',
+            'job_created': 'hard-hat',
+            'job_approved': 'check-circle',
+            'job_scheduled': 'calendar-days',
+            'job_in_progress': 'hard-hat',
+            'job_activated': 'zap',
+            'job_completed': 'flag',
+            'job_cancelled': 'x-circle',
+            'equipment_assigned': 'package',
+            'report_filed': 'file-text'
+        } %}
+        {% for entry in timeline %}
+        {% set show_date = loop.first or entry.created_at.date() != timeline[loop.index0 - 1].created_at.date() %}
+        {% if show_date %}
+        <div class="text-muted small fw-semibold {% if not loop.first %}mt-3{% endif %} mb-1">{{ entry.created_at.strftime('%d %b') }}</div>
+        {% endif %}
+        <div class="d-flex align-items-center gap-2 mb-2 ps-2">
+            <i data-lucide="{{ icons.get(entry.event_type, 'activity') }}" style="width:15px;height:15px;color: var(--gold-bright);"></i>
+            <span>{{ entry.description }}</span>
+            <span class="text-muted ms-auto" style="font-size: 0.75rem;">{{ entry.created_at.strftime('%I:%M %p') }}</span>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% else %}
+<p class="text-muted">No installation activity yet.</p>
+{% endif %}
+{% endblock %}

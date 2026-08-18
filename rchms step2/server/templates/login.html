@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% block title %}Login{% endblock %}
+
+{% block content %}
+<div class="auth-shell auth-shell-photo">
+    <div class="signal-rings" aria-hidden="true" style="position:fixed;"><span></span><span></span><span></span></div>
+    <div class="auth-card">
+        <div class="auth-logo">
+            {% include "_signal_mark.html" %}
+            <div>
+                <div style="font-family: var(--f-display); font-weight: 700; font-size: 1.15rem; color: var(--c-forest);">RuralConnect</div>
+                <div style="font-size: 0.75rem; color: var(--c-ink-muted); text-transform: uppercase; letter-spacing: 0.05em;">Digital Hub</div>
+            </div>
+        </div>
+        <p class="text-muted mb-4" style="font-size: 0.9rem;">Sign in to manage the hub.</p>
+
+        <form method="POST" action="{{ url_for('auth.login') }}">
+            <div class="mb-3">
+                <label for="username" class="form-label">Username</label>
+                <input type="text" class="form-control" id="username" name="username" required autofocus>
+            </div>
+            <div class="mb-3">
+                <label for="password" class="form-label">Password</label>
+                <input type="password" class="form-control" id="password" name="password" required>
+            </div>
+            <button type="submit" class="btn btn-brand w-100 mt-2">Log In</button>
+        </form>
+    </div>
+</div>
+{% endblock %}

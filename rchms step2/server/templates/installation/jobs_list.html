@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+{% block title %}Installation Jobs{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <h1 class="page-title"><i data-lucide="hard-hat" style="width:22px;height:22px;vertical-align:-3px;"></i> Installation Jobs</h1>
+        <p class="page-subtitle">{{ jobs|length }} job{{ 's' if jobs|length != 1 else '' }}{% if status_filter %} &middot; {{ status_filter.replace('_', ' ') }}{% endif %}</p>
+    </div>
+    <a href="{{ url_for('installation.home') }}" class="btn btn-outline-secondary btn-sm">Back to Installation</a>
+</div>
+
+<div class="mb-3 d-flex gap-2 flex-wrap">
+    <a href="{{ url_for('installation.list_jobs') }}" class="btn btn-sm {{ 'btn-gold' if not status_filter else 'btn-outline-secondary' }}">All</a>
+    {% for s in statuses %}
+    <a href="{{ url_for('installation.list_jobs', status=s) }}" class="btn btn-sm {{ 'btn-gold' if status_filter == s else 'btn-outline-secondary' }}">{{ s.replace('_', ' ')|title }}</a>
+    {% endfor %}
+</div>
+
+<div class="card">
+    <div class="card-body p-0">
+        <table class="table table-hover mb-0">
+            <thead class="table-light">
+                <tr>
+                    <th>Member</th>
+                    <th>Technician</th>
+                    <th>Installation Date</th>
+                    <th>Priority</th>
+                    <th>Status</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for job in jobs %}
+                <tr>
+                    <td>{{ job.subscriber.full_name }}</td>
+                    <td class="text-muted">{{ job.technician.full_name if job.technician else '—' }}</td>
+                    <td class="text-muted">{{ job.installation_date.strftime('%d %b %Y') if job.installation_date else 'Not scheduled' }}</td>
+                    <td class="text-muted">{{ job.priority|title }}</td>
+                    <td>
+                        <span class="badge" style="background: var(--gold-glow); color: var(--gold-bright);">{{ job.status.replace('_', ' ')|title }}</span>
+                    </td>
+                    <td class="text-end">
+                        <a href="{{ url_for('installation.view_job', job_id=job.installation_id) }}" class="btn btn-sm btn-outline-primary">View</a>
+                    </td>
+                </tr>
+                {% else %}
+                <tr><td colspan="6" class="text-center text-muted py-4">No installation jobs found.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

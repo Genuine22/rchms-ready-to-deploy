@@ -1,0 +1,98 @@
+{% extends "base.html" %}
+{% block title %}Computers{% endblock %}
+
+{% block content %}
+<div class="page-hero page-hero-tech d-flex justify-content-between align-items-center flex-wrap gap-3">
+    <div class="page-hero-content">
+        <h1 class="page-title">Computers</h1>
+        <p class="page-subtitle">{{ computers|length }} computer{{ 's' if computers|length != 1 else '' }} registered.</p>
+    </div>
+    <a href="{{ url_for('computers.add_computer') }}" class="btn btn-gold page-hero-content">+ Add Computer</a>
+</div>
+
+<div class="row g-3">
+    {% for computer in computers %}
+    <div class="col-md-4 col-lg-3">
+        <div class="node-card state-{{ computer.status }}">
+            <div class="node-card-top">
+                {% if computer.status == 'available' %}
+                    <span class="node-card-status-pill live"><span class="dot"></span>Available</span>
+                {% elif computer.status == 'in_use' %}
+                    <span class="node-card-status-pill live"><span class="dot"></span>In Use</span>
+                {% elif computer.status == 'reserved' %}
+                    <span class="node-card-status-pill"><span class="dot"></span>Reserved</span>
+                {% else %}
+                    <span class="node-card-status-pill"><span class="dot"></span>Offline</span>
+                {% endif %}
+
+                <div class="dropdown">
+                    <button class="btn-kebab" type="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="More actions for {{ computer.name }}">⋮</button>
+                    <ul class="dropdown-menu dropdown-menu-end">
+                        <li><a class="dropdown-item" href="{{ url_for('computers.edit_computer', computer_id=computer.computer_id) }}"><i data-lucide="pencil"></i> Edit details</a></li>
+
+                        {% if computer.status != 'available' and computer.status != 'in_use' %}
+                        <li>
+                            <form method="POST" action="{{ url_for('computers.set_status', computer_id=computer.computer_id) }}">
+                                <input type="hidden" name="status" value="available">
+                                <button type="submit" class="dropdown-item"><i data-lucide="check"></i> Mark available</button>
+                            </form>
+                        </li>
+                        {% endif %}
+
+                        {% if computer.status == 'available' %}
+                        <li>
+                            <form method="POST" action="{{ url_for('computers.set_status', computer_id=computer.computer_id) }}">
+                                <input type="hidden" name="status" value="reserved">
+                                <button type="submit" class="dropdown-item"><i data-lucide="bookmark"></i> Reserve</button>
+                            </form>
+                        </li>
+                        <li>
+                            <form method="POST" action="{{ url_for('computers.set_status', computer_id=computer.computer_id) }}">
+                                <input type="hidden" name="status" value="offline">
+                                <button type="submit" class="dropdown-item"><i data-lucide="pause"></i> Mark offline</button>
+                            </form>
+                        </li>
+                        {% endif %}
+
+                        <li><hr class="dropdown-divider"></li>
+                        <li>
+                            <form method="POST" action="{{ url_for('computers.delete_computer', computer_id=computer.computer_id) }}"
+                                  onsubmit="return confirm('Remove {{ computer.name }}? This only works if it has no session history.');">
+                                <button type="submit" class="dropdown-item text-danger"><i data-lucide="trash-2"></i> Remove</button>
+                            </form>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="node-card-body">
+                {% if computer.status == 'available' %}
+                    <div class="signal-node is-live" style="--node-color: var(--color-success);"></div>
+                {% elif computer.status == 'in_use' %}
+                    <div class="signal-node is-urgent" style="--node-color: var(--color-danger);"></div>
+                {% elif computer.status == 'reserved' %}
+                    <div class="signal-node" style="--node-color: var(--color-warning);"></div>
+                {% else %}
+                    <div class="signal-node" style="--node-color: var(--color-ink-muted);"></div>
+                {% endif %}
+
+                <h5>{{ computer.name }}</h5>
+                <p class="node-card-meta">{{ computer.computer_type|title }} &middot; {{ computer.ip_address or 'no IP set' }}</p>
+            </div>
+
+            <div class="node-card-actions">
+                {% if computer.status == 'available' %}
+                    <a href="{{ url_for('sessions.start_session', computer_id=computer.computer_id) }}" class="btn btn-brand btn-sm">Start Session</a>
+                {% elif computer.status == 'in_use' %}
+                    <a href="{{ url_for('sessions.list_sessions') }}" class="btn btn-outline-secondary btn-sm">View Session</a>
+                {% else %}
+                    <span class="btn btn-outline-secondary btn-sm disabled" style="opacity:0.5;">Unavailable</span>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    {% else %}
+    <p class="text-muted">No computers added yet.</p>
+    {% endfor %}
+</div>
+{% endblock %}

@@ -1,0 +1,120 @@
+{% extends "base.html" %}
+{% block title %}Starlink Installation{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <h1 class="page-title">Starlink Installation</h1>
+        <p class="page-subtitle">Field operations for schools, clinics, small businesses and individual homes — from site survey through to activation.</p>
+    </div>
+</div>
+
+<div class="row mb-4 g-3">
+    <div class="col-md-4 col-sm-6">
+        <a href="{{ url_for('installation.list_surveys', status='pending') }}" class="stat-card">
+            <div class="stat-label">Pending Surveys</div>
+            <div class="stat-value">{{ pending_surveys }}</div>
+        </a>
+    </div>
+    <div class="col-md-4 col-sm-6">
+        <a href="{{ url_for('installation.list_jobs', status='scheduled') }}" class="stat-card">
+            <div class="stat-label">Scheduled Installations</div>
+            <div class="stat-value">{{ scheduled_installations }}</div>
+        </a>
+    </div>
+    <div class="col-md-4 col-sm-6">
+        <div class="stat-card">
+            <div class="stat-label">Completed Today</div>
+            <div class="stat-value" style="color: var(--emerald);">{{ completed_today }}</div>
+        </div>
+    </div>
+    <div class="col-md-4 col-sm-6">
+        <a href="{{ url_for('installation.list_jobs', status='in_progress') }}" class="stat-card">
+            <div class="stat-label">Pending Activation</div>
+            <div class="stat-value">{{ pending_activation }}</div>
+        </a>
+    </div>
+    <div class="col-md-4 col-sm-6">
+        <a href="{{ url_for('inventory.home') }}" class="stat-card">
+            <div class="stat-label">Available Kits</div>
+            <div class="stat-value" style="color: var(--emerald);">{{ available_kits }}</div>
+            {% if low_stock_count %}
+            <div class="mt-1" style="font-size: 0.75rem; color: var(--warning);">⚠ {{ low_stock_count }} item{{ 's' if low_stock_count != 1 else '' }} low or out of stock</div>
+            {% endif %}
+        </a>
+    </div>
+    <div class="col-md-4 col-sm-6">
+        <a href="{{ url_for('fault.home') }}" class="stat-card">
+            <div class="stat-label">Fault Reports</div>
+            <div class="stat-value" style="color: {{ 'var(--danger)' if open_fault_tickets else 'var(--emerald)' }};">{{ open_fault_tickets }}</div>
+            <div class="text-muted mt-1" style="font-size: 0.75rem;">Open tickets</div>
+        </a>
+    </div>
+</div>
+
+<div class="row g-3">
+    <div class="col-md-4 col-sm-6">
+        <a href="{{ url_for('starlink.list_subscribers') }}" class="service-card" style="text-decoration:none; cursor:pointer;">
+            <div class="service-card-icon" style="background: var(--gold-glow); color: var(--gold-bright);">
+                <i data-lucide="users"></i>
+            </div>
+            <div class="service-card-body">
+                <h6 class="service-card-title">Members</h6>
+                <p class="service-card-desc">Everyone who has - or is getting - a physical Starlink installation. Open a member's profile to survey, install, assign equipment or file a report.</p>
+            </div>
+        </a>
+    </div>
+    <div class="col-md-4 col-sm-6">
+        <a href="{{ url_for('fault.home') }}" class="service-card" style="text-decoration:none; cursor:pointer;">
+            <div class="service-card-icon" style="background: var(--gold-glow); color: var(--gold-bright);">
+                <i data-lucide="life-buoy"></i>
+            </div>
+            <div class="service-card-body">
+                <h6 class="service-card-title">Fault Management</h6>
+                <p class="service-card-desc">A full ISP-style helpdesk: tickets, technician assignment, parts used, photos and an audit trail for every fault reported.</p>
+            </div>
+        </a>
+    </div>
+    <div class="col-md-4 col-sm-6">
+        <a href="{{ url_for('installation.schedule') }}" class="service-card" style="text-decoration:none; cursor:pointer;">
+            <div class="service-card-icon" style="background: var(--gold-glow); color: var(--gold-bright);">
+                <i data-lucide="calendar-days"></i>
+            </div>
+            <div class="service-card-body">
+                <h6 class="service-card-title">Schedule</h6>
+                <p class="service-card-desc">A calendar view of upcoming site surveys and installation jobs by technician — scheduled dates, assigned technician and priority at a glance.</p>
+            </div>
+        </a>
+    </div>
+    {% for key, info in sections.items() %}
+    <div class="col-md-4 col-sm-6">
+        <a href="{{ url_for('installation.section_placeholder', section=key) }}" class="service-card" style="text-decoration:none; cursor:pointer;">
+            <div class="service-card-icon" style="background: var(--gold-glow); color: var(--gold-bright);">
+                <i data-lucide="{{ info.icon }}"></i>
+            </div>
+            <div class="service-card-body">
+                <h6 class="service-card-title">{{ info.label }}</h6>
+                <p class="service-card-desc">{{ info.description }}</p>
+            </div>
+        </a>
+    </div>
+    {% endfor %}
+    <div class="col-md-4 col-sm-6">
+        <a href="{{ url_for('installation.reports_home') }}" class="service-card" style="text-decoration:none; cursor:pointer;">
+            <div class="service-card-icon" style="background: var(--gold-glow); color: var(--gold-bright);">
+                <i data-lucide="bar-chart-3"></i>
+            </div>
+            <div class="service-card-body">
+                <h6 class="service-card-title">Reports</h6>
+                <p class="service-card-desc">Daily/monthly installation counts, technician performance and estimated revenue — all downloadable as PDF.</p>
+            </div>
+        </a>
+    </div>
+</div>
+
+<p class="text-muted mt-3">
+    <i data-lucide="info" style="width:16px;height:16px;"></i>
+    Equipment now lives in a proper Inventory module — open a job's "Equipment Assignment (Inventory)" page to
+    assign kit from live stock, deducted automatically once the job is completed.
+</p>
+{% endblock %}

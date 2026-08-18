@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% block title %}Add Computer{% endblock %}
+
+{% block content %}
+<div class="form-shell">
+    <div class="form-shell-icon"><i data-lucide="monitor"></i></div>
+    <h1 class="page-title" style="font-size: 1.4rem;">Add Computer</h1>
+    <p class="page-subtitle mb-4">Register a new PC for the hub.</p>
+
+    <div class="card">
+        <div class="card-body p-4">
+            <form method="POST" action="{{ url_for('computers.add_computer') }}">
+                <div class="mb-3">
+                    <label class="form-label">Computer Name</label>
+                    <input type="text" class="form-control" name="name" placeholder="e.g. PC 6" required autofocus>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Type</label>
+                    <select class="form-select" name="computer_type">
+                        <option value="browsing">Browsing</option>
+                        <option value="gaming">Gaming</option>
+                    </select>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">IP Address <span class="text-muted">(optional, fill in once known)</span></label>
+                    <input type="text" class="form-control" name="ip_address" placeholder="e.g. 192.168.1.10">
+                </div>
+                <div class="d-flex gap-2 mt-4">
+                    <button type="submit" class="btn btn-brand">Add Computer</button>
+                    <a href="{{ url_for('computers.list_computers') }}" class="btn btn-outline-secondary">Cancel</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

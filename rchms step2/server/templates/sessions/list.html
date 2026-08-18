@@ -1,0 +1,198 @@
+{% extends "base.html" %}
+{% block title %}Active Sessions{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1 class="page-title">Active Sessions</h1>
+    <a href="{{ url_for('sessions.start_session') }}" class="btn btn-brand">
+        + Start Session
+    </a>
+</div>
+
+<ul class="nav nav-pills mb-3">
+    <li class="nav-item">
+        <a class="nav-link {% if not category %}active{% endif %}"
+           href="{{ url_for('sessions.list_sessions') }}">All</a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link {% if category == 'internet' %}active{% endif %}"
+           href="{{ url_for('sessions.list_sessions', category='internet') }}"><i data-lucide="globe" style="width:16px;height:16px;"></i> Browsing</a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link {% if category == 'gaming' %}active{% endif %}"
+           href="{{ url_for('sessions.list_sessions', category='gaming') }}"><i data-lucide="gamepad-2" style="width:16px;height:16px;"></i> Gaming</a>
+    </li>
+</ul>
+
+<div class="card">
+    <div class="card-body p-0">
+        <table class="table table-hover mb-0">
+            <thead class="table-light">
+                <tr>
+                    <th>Computer</th>
+                    <th>Customer</th>
+                    <th>Package</th>
+                    <th>Started</th>
+                    <th>Ends</th>
+                    <th>Time Left</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody id="sessions-tbody">
+                {% for session in sessions %}
+                <tr data-session-id="{{ session.session_id }}">
+                    <td><strong>{{ session.computer.name }}</strong></td>
+                    <td>{{ session.customer.full_name }}</td>
+                    <td>{{ session.service.service_name if session.service else "Deleted package" }}</td>
+                    <td>{{ session.started_at.strftime('%I:%M %p') }}</td>
+                    <td>{{ session.ends_at.strftime('%I:%M %p') }}</td>
+                    <td>
+                        <span class="signal-bars-slot"></span>
+                        <span class="time-left-text" data-remaining="{{ session.seconds_remaining() }}"></span>
+                    </td>
+                    <td class="text-end">
+                        <a href="{{ url_for('sessions.view_session', session_id=session.session_id) }}"
+                           class="btn btn-sm btn-outline-primary">View</a>
+                        <form method="POST" action="{{ url_for('sessions.end_session', session_id=session.session_id) }}"
+                              class="d-inline" onsubmit="return confirm('End this session now?');">
+                            <button type="submit" class="btn btn-sm btn-outline-danger">End</button>
+                        </form>
+                    </td>
+                </tr>
+                {% else %}
+                <tr id="no-sessions-row">
+                    <td colspan="7" class="text-center text-muted py-4">No active sessions right now.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<script>
+// --- Live countdown engine ---
+// Each row's remaining time ticks down every second on the client side
+// (no flicker, no reload). Every 10 seconds we quietly re-sync with the
+// server's JSON endpoint - this corrects any drift and picks up newly
+// started/ended sessions, but the visible per-second countdown itself
+// never causes a reload or flash.
+
+const ACTIVE_SESSIONS_URL = "{{ url_for('sessions.active_sessions_json', category=category) }}";
+// Each entry: { remaining: <seconds the server gave us>, syncedAtMs: <Date.now() when we got it> }
+// Computing "now" values from this elapsed-time anchor (rather than an
+// accumulating decrement) keeps every countdown on this page moving at
+// the exact same real-world speed as the session view page and the
+// client PC agent - all three use this identical approach.
+let countdowns = {};
+
+function signalBarsHtml(secs) {
+    let level;
+    if (secs > 1200) level = 4;
+    else if (secs > 600) level = 3;
+    else if (secs > 300) level = 2;
+    else level = 1;
+    return `<span class="signal-bars level-${level} me-2"><span></span><span></span><span></span><span></span></span>`;
+}
+
+function formatTime(totalSeconds) {
+    const s = Math.max(0, totalSeconds);
+    const m = Math.floor(s / 60);
+    const sec = s % 60;
+    return String(m).padStart(2, '0') + ':' + String(sec).padStart(2, '0');
+}
+
+function currentRemaining(sessionId) {
+    const entry = countdowns[sessionId];
+    if (!entry) return 0;
+    const elapsedSeconds = (Date.now() - entry.syncedAtMs) / 1000;
+    return Math.max(0, Math.round(entry.remaining - elapsedSeconds));
+}
+
+function renderRowTime(sessionId) {
+    const row = document.querySelector(`tr[data-session-id="${sessionId}"]`);
+    if (!row) return;
+    const secs = currentRemaining(sessionId);
+    const barsSlot = row.querySelector('.signal-bars-slot');
+    const textSlot = row.querySelector('.time-left-text');
+    if (barsSlot) barsSlot.innerHTML = signalBarsHtml(secs);
+    if (textSlot) textSlot.textContent = formatTime(secs);
+}
+
+// Redraw every row a few times a second for a smooth look - the VALUE
+// itself always comes from currentRemaining()'s elapsed-time math above,
+// never from an accumulating counter.
+setInterval(function() {
+    for (const id in countdowns) {
+        renderRowTime(id);
+    }
+}, 250);
+
+// Re-sync with the server every 10 seconds: pick up new/ended sessions,
+// correct any drift, without ever reloading the page.
+function syncSessions() {
+    fetch(ACTIVE_SESSIONS_URL)
+        .then(response => response.json())
+        .then(sessions => {
+            const tbody = document.getElementById('sessions-tbody');
+            const seenIds = new Set();
+            const now = Date.now();
+
+            sessions.forEach(function(s) {
+                seenIds.add(String(s.session_id));
+                countdowns[s.session_id] = { remaining: s.seconds_remaining, syncedAtMs: now };
+
+                let row = document.querySelector(`tr[data-session-id="${s.session_id}"]`);
+                if (!row) {
+                    row = document.createElement('tr');
+                    row.setAttribute('data-session-id', s.session_id);
+                    row.innerHTML = `
+                        <td><strong>${s.computer_name}</strong></td>
+                        <td>${s.customer_name}</td>
+                        <td>${s.service_name}</td>
+                        <td>${s.started_at}</td>
+                        <td>${s.ends_at}</td>
+                        <td><span class="signal-bars-slot"></span> <span class="time-left-text"></span></td>
+                        <td class="text-end">
+                            <a href="/sessions/${s.session_id}" class="btn btn-sm btn-outline-primary">View</a>
+                        </td>`;
+                    tbody.appendChild(row);
+                    const noRow = document.getElementById('no-sessions-row');
+                    if (noRow) noRow.remove();
+                }
+                renderRowTime(s.session_id);
+            });
+
+            // Remove rows for sessions that ended since the last sync.
+            document.querySelectorAll('tr[data-session-id]').forEach(function(row) {
+                const id = row.getAttribute('data-session-id');
+                if (!seenIds.has(id)) {
+                    delete countdowns[id];
+                    row.remove();
+                }
+            });
+
+            if (sessions.length === 0 && !document.getElementById('no-sessions-row')) {
+                const tr = document.createElement('tr');
+                tr.id = 'no-sessions-row';
+                tr.innerHTML = '<td colspan="7" class="text-center text-muted py-4">No active sessions right now.</td>';
+                tbody.appendChild(tr);
+            }
+        })
+        .catch(() => { /* silently retry next cycle */ });
+}
+
+// Seed the local countdown state from what the server already rendered,
+// so the very first redraw already shows the correct value before the
+// first sync completes.
+document.querySelectorAll('.time-left-text[data-remaining]').forEach(function(el) {
+    const row = el.closest('tr[data-session-id]');
+    if (row) {
+        const id = row.getAttribute('data-session-id');
+        countdowns[id] = { remaining: parseInt(el.getAttribute('data-remaining'), 10), syncedAtMs: Date.now() };
+        renderRowTime(id);
+    }
+});
+
+setInterval(syncSessions, 10000);
+</script>
+{% endblock %}
