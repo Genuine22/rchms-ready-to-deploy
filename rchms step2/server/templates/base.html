@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}RCHMS{% endblock %} — RuralConnect Hub</title>
+    <title>{% block title %}RCHMS{% endblock %} — Rural/Urban Connect Hub</title>
     <script>
         // Applied BEFORE stylesheets load, so the page never flashes the
         // wrong theme for a split second on load/navigation. Reads the
@@ -39,7 +39,7 @@
             <div class="signal-rings" aria-hidden="true"><span></span><span></span><span></span></div>
             {% include "_signal_mark.html" %}
             <div class="sidebar-brand-text">
-                RuralConnect
+                Rural/Urban Connect
                 <small>Digital Hub</small>
             </div>
         </div>
@@ -179,11 +179,11 @@
         </div>
 
         <footer class="app-footer">
-            <div>&copy; {{ current_year }} RuralConnect Ghana. All rights reserved.</div>
+            <div>&copy; {{ current_year }} Rural/Urban Connect Ghana. All rights reserved.</div>
             <div class="app-footer-links">
                 <span>RCHMS v1.0</span>
                 <a href="{{ url_for('starlink.voucher_lookup') }}" target="_blank">Voucher Lookup</a>
-                <a href="mailto:support@ruralconnect.gh">Support</a>
+                <a href="mailto:support@rural/urbanconnect.gh">Support</a>
             </div>
         </footer>
     </main>
